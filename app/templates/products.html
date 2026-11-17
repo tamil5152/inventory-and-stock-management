@@ -35,7 +35,7 @@
         <table>
             <thead>
                 <tr>
-                    <th>Product</th><th>Barcode</th><th>Category</th><th>Supplier</th>
+                    <th>Product</th><th>Barcode</th><th>Category</th><th>Shelf</th>
                     <th class="num">Price</th><th class="num">Qty</th><th>Status</th><th></th>
                 </tr>
             </thead>
@@ -60,8 +60,10 @@
             <label>SKU *<input name="sku" required maxlength="50" placeholder="ELEC-001"></label>
             <label>Barcode *<input name="barcode" required maxlength="100" placeholder="8901001000011"></label>
             <label class="span-2">Name *<input name="name" required maxlength="150"></label>
-            <label>Category<input name="category" list="category-list" maxlength="100" placeholder="General"></label>
-            <label>Supplier<select name="supplier_id" id="supplier-select"><option value="">— None —</option></select></label>
+            <label>Category *<input name="category" list="category-list" maxlength="100" required placeholder="Keyboards & Mice"></label>
+            <label>Supplier<select name="supplier_id" id="supplier-select"><option value="">No supplier</option></select></label>
+            <label>Shelf<select name="shelf_id" id="shelf-select"><option value="">Not on a shelf</option></select>
+                <span class="form-hint">Stock checks go to the staff on this shelf.</span></label>
             <label>Unit price (Rs.) *<input name="unit_price" type="number" min="0" step="0.01" required value="0"></label>
             <label>Reorder level *<input name="reorder_level" type="number" min="0" step="1" required value="5"></label>
             <label>Count every (days) *<input name="count_interval_days" type="number" min="1" max="365" step="1" required value="30">

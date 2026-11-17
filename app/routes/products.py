@@ -60,6 +60,21 @@ def _clean_product_payload(data, partial=False):
             raise ValueError("Count cycle must be between 1 and 365 days.")
         clean["count_interval_days"] = interval
 
+    if "shelf_id" in data:
+        shelf_id = data.get("shelf_id")
+
+        if shelf_id in (None, "", 0, "0"):
+            clean["shelf_id"] = None
+        else:
+            from app.models.shelf import Shelf
+            try:
+                shelf = db.session.get(Shelf, int(shelf_id))
+            except (TypeError, ValueError):
+                shelf = None
+            if not shelf or not shelf.is_active:
+                raise ValueError("Shelf not found.")
+            clean["shelf_id"] = shelf.id
+
     if "supplier_id" in data:
         supplier_id = data.get("supplier_id")
 

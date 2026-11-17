@@ -17,7 +17,7 @@
             {% endif %}
         </h2>
         <p>
-            {% if checks.first %}Start with {{ checks.first.product_name }}: {{ checks.first.reason_text|lower }}.{% endif %}
+            {% if checks.first %}Start with {{ checks.first.product_name }}{% if checks.first.shelf_code %} on shelf {{ checks.first.shelf_code }}{% endif %}: {{ checks.first.reason_text|lower }}.{% endif %}
         </p>
         <div class="meta">
             <span><strong>{{ checks.high }}</strong> high priority</span>

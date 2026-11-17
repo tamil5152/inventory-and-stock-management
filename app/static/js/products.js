@@ -14,6 +14,11 @@
     let products = [];
     let suppliersLoaded = false;
 
+    const COMPUTER_ACCESSORY_CATEGORIES = [
+        "Keyboards & Mice", "Monitors", "Cables & Adapters", "Storage", "Audio",
+        "Networking", "Power & Charging", "Laptop Accessories", "Webcams", "Printers & Ink",
+    ];
+
     async function loadProducts() {
 
         const params = new URLSearchParams();
@@ -38,8 +43,9 @@
         categoryFilter.innerHTML = '<option value="">All categories</option>' +
             categories.map((c) => `<option ${c === current ? "selected" : ""}>${StockFlow.escapeHtml(c)}</option>`).join("");
 
+        const suggestions = [...new Set([...COMPUTER_ACCESSORY_CATEGORIES, ...categories])];
         document.getElementById("category-list").innerHTML =
-            categories.map((c) => `<option value="${StockFlow.escapeHtml(c)}">`).join("");
+            suggestions.map((c) => `<option value="${StockFlow.escapeHtml(c)}">`).join("");
     }
 
     function render() {
@@ -56,7 +62,7 @@
                 <td><strong>${e(p.name)}</strong><br><small class="muted">${e(p.sku)}</small></td>
                 <td><code>${e(p.barcode)}</code><br><small class="muted">count every ${p.count_interval_days} d</small></td>
                 <td>${e(p.category)}</td>
-                <td>${e(p.supplier_name || "-")}</td>
+                <td>${p.shelf_code ? `<span class="chip" title="${e(p.shelf_name)}">${e(p.shelf_code)}</span>` : '<span class="muted">-</span>'}</td>
                 <td class="num">${StockFlow.money(p.unit_price)}</td>
                 <td class="num"><strong>${p.quantity}</strong><br><small class="muted">reorder ≤ ${p.reorder_level}</small></td>
                 <td>${p.is_active ? StockFlow.badge(p.stock_status) : '<span class="badge">Archived</span>'}</td>
@@ -75,12 +81,15 @@
         if (suppliersLoaded) return;
 
         try {
-            const result = await StockFlow.api("/api/suppliers/");
+            const [result, shelves] = await Promise.all([StockFlow.api("/api/suppliers/"), StockFlow.api("/api/shelves/")]);
             document.getElementById("supplier-select").innerHTML =
-                '<option value="">— None —</option>' +
+                '<option value="">No supplier</option>' +
                 result.data.map((s) => `<option value="${s.id}">${StockFlow.escapeHtml(s.company_name)}</option>`).join("");
+            document.getElementById("shelf-select").innerHTML =
+                '<option value="">Not on a shelf</option>' +
+                shelves.data.map((s) => `<option value="${s.id}">${StockFlow.escapeHtml(s.code + " " + s.name)}${s.staff.length ? "" : " (nobody assigned)"}</option>`).join("");
             suppliersLoaded = true;
-        } catch (_) { /* supplier list is optional */ }
+        } catch (_) { /* lists are optional */ }
     }
 
     async function openForm(product = null) {
@@ -99,6 +108,7 @@
             form.name.value = product.name;
             form.category.value = product.category;
             form.supplier_id.value = product.supplier_id || "";
+            form.shelf_id.value = product.shelf_id || "";
             form.unit_price.value = product.unit_price;
             form.reorder_level.value = product.reorder_level;
             form.count_interval_days.value = product.count_interval_days || 30;

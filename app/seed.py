@@ -12,46 +12,70 @@ from app.models.product import Product
 from app.models.inventory import Inventory, StockMovement, StockVerification
 
 
+# username, full name, e-mail, mobile, role, password, shelf codes
 DEMO_USERS = [
-    ("admin", "admin@stockflow.local", "admin", "Admin@123456"),
-    ("manager", "manager@stockflow.local", "manager", "Manager@123456"),
-    ("staff", "staff@stockflow.local", "staff", "Staff@123456"),
+    ("admin", "Tamil Selvan", "admin@stockflow.local", "+919384515257", "admin", "Admin@123456", []),
+    ("manager", "Meena Raj", "manager@stockflow.local", "+919876500001", "manager", "Manager@123456", []),
+    ("staff", "Karthik Kumar", "karthik@stockflow.local", "+919876500002", "staff", "Staff@123456", ["A1", "A2"]),
+    ("priya", "Priya Nair", "priya@stockflow.local", "+919876500003", "staff", "Staff@123456", ["B1", "B2"]),
+    ("arun", "Arun Prakash", "arun@stockflow.local", "+919876500004", "staff", "Staff@123456", ["C1", "C2"]),
+]
+
+# code, name, location
+DEMO_SHELVES = [
+    ("A1", "Keyboards & Mice", "Aisle A, left rack"),
+    ("A2", "Monitors", "Aisle A, floor stack"),
+    ("B1", "Cables & Adapters", "Aisle B, pegboard"),
+    ("B2", "Storage", "Aisle B, glass cabinet"),
+    ("C1", "Audio", "Aisle C, top rack"),
+    ("C2", "Networking & Power", "Aisle C, bottom rack"),
 ]
 
 DEMO_SUPPLIERS = [
     ("TechSource Distributors", "Ravi Kumar", "sales@techsource.example", "+91 98400 11111", "Chennai, Tamil Nadu"),
-    ("OfficeMart Supplies", "Priya Nair", "orders@officemart.example", "+91 80 4123 4567", "Bengaluru, Karnataka"),
-    ("Hosur Hardware Co.", "Senthil M", "contact@hosurhw.example", "+91 94430 22222", "Hosur, Tamil Nadu"),
+    ("PeriPro Electronics", "Priya Nair", "orders@peripro.example", "+91 80 4123 4567", "Bengaluru, Karnataka"),
+    ("Hosur Computer World", "Senthil M", "contact@hosurcw.example", "+91 94430 22222", "Hosur, Tamil Nadu"),
 ]
 
-# sku, barcode, name, category, price, reorder, qty, supplier index
+# sku, barcode, name, category, price, reorder, qty, supplier index, shelf code
 DEMO_PRODUCTS = [
-    ("ELEC-001", "8901001000011", "Wireless Mouse", "Electronics", "549.00", 10, 42, 0),
-    ("ELEC-002", "8901001000028", "USB Keyboard", "Electronics", "799.00", 8, 6, 0),
-    ("ELEC-003", "8901001000035", "24-inch Monitor", "Electronics", "11499.00", 3, 5, 0),
-    ("ELEC-004", "8901001000042", "HDMI Cable 1.5m", "Electronics", "249.00", 15, 0, 0),
-    ("ELEC-005", "8901001000059", "USB-C Charger 65W", "Electronics", "1899.00", 6, 14, 0),
-    ("OFF-001", "8902002000014", "A4 Paper Ream (500)", "Stationery", "320.00", 20, 75, 1),
-    ("OFF-002", "8902002000021", "Ball Pen Box (10)", "Stationery", "90.00", 25, 18, 1),
-    ("OFF-003", "8902002000038", "Stapler", "Stationery", "185.00", 5, 12, 1),
-    ("OFF-004", "8902002000045", "Whiteboard Marker Set", "Stationery", "240.00", 10, 9, 1),
-    ("HW-001", "8903003000017", "Screwdriver Set", "Hardware", "650.00", 4, 11, 2),
-    ("HW-002", "8903003000024", "Measuring Tape 5m", "Hardware", "210.00", 6, 3, 2),
-    ("HW-003", "8903003000031", "Extension Board 4-way", "Hardware", "499.00", 8, 22, 2),
+    ("KBM-001", "8901001000011", "Wireless Mouse", "Keyboards & Mice", "549.00", 10, 42, 0, "A1"),
+    ("KBM-002", "8901001000028", "USB Keyboard", "Keyboards & Mice", "799.00", 8, 6, 0, "A1"),
+    ("KBM-003", "8901001000097", "Mechanical Gaming Keyboard", "Keyboards & Mice", "3499.00", 4, 9, 1, "A1"),
+    ("MON-001", "8901001000035", "24-inch IPS Monitor", "Monitors", "11499.00", 3, 5, 1, "A2"),
+    ("MON-002", "8901001000103", "Monitor Arm (Single)", "Monitors", "1899.00", 3, 7, 1, "A2"),
+    ("CAB-001", "8901001000042", "HDMI Cable 1.5m", "Cables & Adapters", "249.00", 15, 0, 0, "B1"),
+    ("CAB-002", "8902002000014", "USB-C to HDMI Adapter", "Cables & Adapters", "899.00", 6, 18, 2, "B1"),
+    ("CAB-003", "8902002000021", "USB 3.0 Hub 4-Port", "Cables & Adapters", "699.00", 8, 4, 2, "B1"),
+    ("STO-001", "8902002000038", "1TB External SSD", "Storage", "6499.00", 4, 11, 1, "B2"),
+    ("STO-002", "8902002000045", "64GB Pen Drive", "Storage", "449.00", 20, 9, 2, "B2"),
+    ("AUD-001", "8903003000017", "USB Headset with Mic", "Audio", "1299.00", 5, 14, 1, "C1"),
+    ("AUD-002", "8903003000024", "Bluetooth Speaker", "Audio", "1799.00", 4, 3, 1, "C1"),
+    ("NET-001", "8903003000031", "Wi-Fi Router AC1200", "Networking", "2299.00", 3, 8, 0, "C2"),
+    ("PWR-001", "8901001000059", "65W USB-C Laptop Charger", "Power & Charging", "1899.00", 6, 14, 0, "C2"),
+    ("LAP-001", "8901001000066", "Laptop Cooling Pad", "Laptop Accessories", "999.00", 5, 12, 2, None),
 ]
-
 
 def ensure_demo_users():
 
     created = []
 
-    for username, email, role, password in DEMO_USERS:
+    from flask import current_app
+    from app.models.shelf import Shelf
+
+    admin_email = (current_app.config.get("ADMIN_EMAIL") or "").strip().lower()
+
+    for username, full_name, email, phone, role, password, shelf_codes in DEMO_USERS:
+
+        if role == "admin" and admin_email:
+            email = admin_email
 
         if User.query.filter((User.username == username) | (User.email == email)).first():
             continue
 
-        user = User(username=username, email=email, role=role)
+        user = User(username=username, email=email, role=role, full_name=full_name, phone=phone)
         user.set_password(password)
+        user.shelves = Shelf.query.filter(Shelf.code.in_(shelf_codes)).all() if shelf_codes else []
         db.session.add(user)
         created.append(username)
 
@@ -62,6 +86,13 @@ def ensure_demo_users():
 
 def seed_demo_data():
     """Idempotent: running twice does not duplicate data."""
+
+    from app.models.shelf import Shelf
+
+    for code, name, location in DEMO_SHELVES:
+        if not Shelf.query.filter_by(code=code).first():
+            db.session.add(Shelf(code=code, name=name, location=location))
+    db.session.flush()
 
     created_users = ensure_demo_users()
     admin = User.query.filter_by(role="admin").first()
@@ -89,7 +120,9 @@ def seed_demo_data():
     admin_id = admin.id if admin else None
     staff_user = User.query.filter_by(role="staff").first()
 
-    for index, (sku, barcode, name, category, price, reorder, qty, sup) in enumerate(DEMO_PRODUCTS):
+    shelves = {s.code: s for s in Shelf.query.all()}
+
+    for index, (sku, barcode, name, category, price, reorder, qty, sup, shelf_code) in enumerate(DEMO_PRODUCTS):
 
         if Product.query.filter((Product.sku == sku) | (Product.barcode == barcode)).first():
             continue
@@ -98,8 +131,9 @@ def seed_demo_data():
             sku=sku, barcode=barcode, name=name, category=category,
             unit_price=Decimal(price), reorder_level=reorder,
             supplier_id=suppliers[sup].id,
+            shelf_id=shelves[shelf_code].id if shelf_code else None,
             description=f"Demo product: {name}",
-            count_interval_days=14 if category == "Electronics" else 30,
+            count_interval_days=14 if category in ("Storage", "Monitors") else 30,
             created_at=now - timedelta(days=45),
         )
         db.session.add(product)
@@ -151,8 +185,8 @@ def seed_demo_data():
         # and one with a mismatch so every kind of stock check shows up.
         counted_by = staff_user.id if staff_user else admin_id
 
-        if sku not in ("OFF-004", "ELEC-005"):        # these two were never counted
-            if sku == "OFF-003":
+        if sku not in ("STO-002", "LAP-001"):        # these two were never counted
+            if sku == "CAB-002":
                 db.session.add(StockVerification(
                     product_id=product.id, user_id=counted_by, barcode=barcode,
                     expected_quantity=qty, physical_quantity=qty - 3, discrepancy=-3,
@@ -160,7 +194,7 @@ def seed_demo_data():
                     created_at=now - timedelta(days=2),
                 ))
             else:
-                days_ago = 40 if sku == "HW-003" else rng.randint(0, 6)
+                days_ago = 40 if sku == "NET-001" else rng.randint(0, 6)
                 db.session.add(StockVerification(
                     product_id=product.id, user_id=counted_by, barcode=barcode,
                     expected_quantity=qty, physical_quantity=qty, discrepancy=0,
@@ -180,9 +214,10 @@ def seed_demo_data():
 
     if created_users:
         lines.append("Demo logins created:")
-        for username, _, role, password in DEMO_USERS:
+        for username, full_name, email, _, role, password, shelf_codes in DEMO_USERS:
             if username in created_users:
-                lines.append(f"  {role:<8} username: {username:<8} password: {password}")
+                shelves_text = f"  shelves {', '.join(shelf_codes)}" if shelf_codes else ""
+                lines.append(f"  {role:<8} {full_name:<14} username: {username:<8} password: {password}{shelves_text}")
     else:
         lines.append("Demo users already existed (see README for credentials).")
 
@@ -191,17 +226,31 @@ def seed_demo_data():
 
 def create_admin_interactive():
 
+    from flask import current_app
+    from app.utils.validators import validate_email, validate_full_name, validate_phone
+
+    default_email = (current_app.config.get("ADMIN_EMAIL") or "").strip()
+
     username = input("Admin username: ").strip()
-    email = input("Admin email: ").strip().lower()
+    full_name = input("Full name: ").strip()
+    email = input(f"Admin email [{default_email}]: ").strip().lower() or default_email
+    phone = input("Mobile number: ").strip()
     password = getpass.getpass("Admin password (min 12 chars): ")
 
-    if not username or not email or len(password) < 12:
-        raise SystemExit("Enter a username, email and password of at least 12 characters.")
+    try:
+        full_name = validate_full_name(full_name)
+        email = validate_email(email)
+        phone = validate_phone(phone)
+    except ValueError as error:
+        raise SystemExit(str(error))
+
+    if not username or len(password) < 12:
+        raise SystemExit("Enter a username and a password of at least 12 characters.")
 
     if User.query.filter((User.username == username) | (User.email == email)).first():
         raise SystemExit("Username or email already exists.")
 
-    admin = User(username=username, email=email, role="admin")
+    admin = User(username=username, email=email, role="admin", full_name=full_name, phone=phone)
     admin.set_password(password)
     db.session.add(admin)
     db.session.commit()

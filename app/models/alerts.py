@@ -68,9 +68,11 @@ class CheckTask(db.Model):
         due = self.due_at if self.due_at.tzinfo else self.due_at.replace(tzinfo=timezone.utc)
         return due < _now()
 
-    def to_dict(self):
+    def to_dict(self, include_contact=False):
         product = self.product
-        return {
+        assignee = self.assignee
+        shelf = product.shelf if product else None
+        data = {
             "id": self.id,
             "product_id": self.product_id,
             "product_name": product.name if product else None,
@@ -79,9 +81,11 @@ class CheckTask(db.Model):
             "category": product.category if product else None,
             "system_quantity": product.quantity if product else None,
             "assigned_to": self.assigned_to,
-            "assignee": self.assignee.username if self.assignee else None,
-            "created_by": self.creator.username if self.creator else "System",
-            "completed_by": self.completer.username if self.completer else None,
+            "assignee": assignee.display_name if assignee else None,
+            "shelf_code": shelf.code if shelf else None,
+            "shelf_name": shelf.name if shelf else None,
+            "created_by": self.creator.display_name if self.creator else "System",
+            "completed_by": self.completer.display_name if self.completer else None,
             "reason": self.reason,
             "reason_text": self.REASONS.get(self.reason, self.reason),
             "priority": self.priority,
@@ -94,6 +98,12 @@ class CheckTask(db.Model):
             "created_at": _iso(self.created_at),
             "completed_at": _iso(self.completed_at),
         }
+
+        if include_contact and assignee:
+            data["assignee_email"] = assignee.email
+            data["assignee_phone"] = assignee.phone
+
+        return data
 
 
 class Notification(db.Model):

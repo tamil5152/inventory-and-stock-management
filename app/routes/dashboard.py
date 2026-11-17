@@ -85,6 +85,12 @@ def checks_page():
     return render_template("checks.html")
 
 
+@dashboard_bp.route("/shelves")
+@login_required
+def shelves_page():
+    return render_template("shelves.html")
+
+
 @dashboard_bp.route("/users")
 @login_required
 @role_required("admin")

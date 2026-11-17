@@ -9,11 +9,15 @@ count a product when:
     and no clean recount for a day),
   * the product has never been counted, or its count cycle has expired.
 
-Each new task is assigned to the active staff member with the fewest open
-tasks and they get an in-app (and optional e-mail) notification.
+Each new task goes to a staff member responsible for the product's shelf
+(the least busy one), falling back to any staff member, then managers.
+The assignee gets an in-app notification and an e-mail, and the admin mailbox
+(ADMIN_EMAIL) gets a copy of the assignment.
 """
 
 from datetime import datetime, timedelta, timezone
+
+from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 from flask import current_app
 from sqlalchemy import func
@@ -42,6 +46,21 @@ def _now():
     return datetime.now(timezone.utc)
 
 
+def _local(value):
+    """Format a UTC datetime in DISPLAY_TIMEZONE for e-mails, e.g. '18 Nov 2026, 06:46 IST'."""
+
+    if value is None:
+        return "-"
+
+    name = current_app.config.get("DISPLAY_TIMEZONE") or "UTC"
+    try:
+        zone = ZoneInfo(name)
+    except (ZoneInfoNotFoundError, ValueError):
+        zone = timezone.utc
+
+    return _utc(value).astimezone(zone).strftime("%d %b %Y, %I:%M %p %Z")
+
+
 class CheckService:
 
     # -------------------------------------------------------------
@@ -66,8 +85,32 @@ class CheckService:
         }
 
     @staticmethod
-    def pick_assignee():
-        """Active staff member with the fewest open tasks (managers if no staff)."""
+    def _least_busy(users):
+
+        load = dict(
+            db.session.query(CheckTask.assigned_to, func.count(CheckTask.id))
+            .filter(CheckTask.status.in_(["OPEN", "IN_PROGRESS"]))
+            .group_by(CheckTask.assigned_to)
+            .all()
+        )
+        return min(users, key=lambda u: (load.get(u.id, 0), u.id))
+
+    @staticmethod
+    def pick_assignee(product=None):
+        """
+        1. Active people assigned to the product's shelf (staff before managers).
+        2. Otherwise any active staff member, then managers, then admins.
+        The least busy person in the first non-empty group wins.
+        """
+
+        shelf = product.shelf if product is not None else None
+
+        if shelf is not None and shelf.is_active:
+            shelf_people = shelf.active_staff()
+            for roles in (("staff",), ("manager", "admin")):
+                group = [u for u in shelf_people if u.role in roles]
+                if group:
+                    return CheckService._least_busy(group)
 
         for roles in (("staff",), ("manager",), ("admin",)):
             users = User.query.filter(
@@ -75,25 +118,59 @@ class CheckService:
             ).all()
 
             if users:
-                load = dict(
-                    db.session.query(CheckTask.assigned_to, func.count(CheckTask.id))
-                    .filter(CheckTask.status.in_(["OPEN", "IN_PROGRESS"]))
-                    .group_by(CheckTask.assigned_to)
-                    .all()
-                )
-                return min(users, key=lambda u: (load.get(u.id, 0), u.id))
+                return CheckService._least_busy(users)
 
         return None
+
+    @staticmethod
+    def describe_assignment(task):
+        """Plain-text lines describing who has to count what, for e-mails."""
+
+        product = task.product
+        shelf = product.shelf
+        person = task.assignee
+
+        lines = [
+            f"Product:   {product.name} ({product.sku})",
+            f"Barcode:   {product.barcode}",
+            f"Shelf:     {shelf.label + (' - ' + shelf.location if shelf.location else '') if shelf else 'Not set'}",
+            f"Reason:    {CheckTask.REASONS.get(task.reason, task.reason)}",
+            f"Priority:  {task.priority.capitalize()}",
+            f"Due:       {_local(task.due_at)}",
+        ]
+
+        if person:
+            lines += [
+                "",
+                f"Assigned to: {person.display_name}",
+                f"E-mail:      {person.email}",
+                f"Mobile:      {person.phone or 'Not given'}",
+            ]
+        else:
+            lines += ["", "Assigned to: nobody (add staff to this shelf)"]
+
+        return "\n".join(lines)
+
+    @staticmethod
+    def email_admin_assignment(task, heading="New job assigned"):
+
+        person = task.assignee.display_name if task.assignee else "nobody"
+        NotificationService.email_admin(
+            f"{heading}: {task.product.name} to {person}",
+            f"A stock check has been assigned.\n\n{CheckService.describe_assignment(task)}",
+            link="/checks",
+        )
 
     # -------------------------------------------------------------
     # Creating tasks
     # -------------------------------------------------------------
 
     @staticmethod
-    def create_task(product, reason, priority, assignee=None, created_by=None, note=None, due_at=None, notify=True):
+    def create_task(product, reason, priority, assignee=None, created_by=None, note=None, due_at=None,
+                    notify=True, admin_email=True):
 
         if assignee is None:
-            assignee = CheckService.pick_assignee()
+            assignee = CheckService.pick_assignee(product)
 
         task = CheckTask(
             product_id=product.id,
@@ -108,15 +185,26 @@ class CheckService:
         db.session.flush()
 
         if notify and assignee:
+            shelf_text = f" on shelf {product.shelf.label}" if product.shelf else ""
             NotificationService.notify(
                 assignee,
-                f"Count {product.name} ({product.sku})",
+                f"Count {product.name} ({product.sku}){shelf_text}",
                 f"{CheckTask.REASONS.get(reason, reason)}. Please count the shelf and record "
                 f"the physical quantity. Priority: {priority.lower()}.",
                 category="CHECK_ASSIGNED",
                 link=f"/scanner?barcode={product.barcode}&task={task.id}",
-                email=True,
             )
+            NotificationService.send_email(
+                assignee.email,
+                f"New job: count {product.name}{shelf_text}",
+                f"Hello {assignee.display_name},\n\nYou have a new stock check.\n\n"
+                f"{CheckService.describe_assignment(task)}\n\n"
+                "Open the link, scan the barcode, count the shelf and enter the number.",
+                link=f"/scanner?barcode={product.barcode}&task={task.id}",
+            )
+
+        if notify and admin_email:
+            CheckService.email_admin_assignment(task)
 
         return task
 
@@ -213,7 +301,7 @@ class CheckService:
         while heap.size() and len(created) < max_new:
             product_id = heap.get_highest_priority()["product_id"]
             product, reason, priority = candidates[product_id]
-            created.append(CheckService.create_task(product, reason, priority))
+            created.append(CheckService.create_task(product, reason, priority, admin_email=False))
 
         overdue = CheckService.notify_overdue()
 
@@ -229,6 +317,17 @@ class CheckService:
             log_action(
                 actor.id if actor else None, "CHECKS_GENERATED", "CheckTask", None,
                 f"{len(created)} task(s) created automatically.",
+            )
+
+            # One digest e-mail to the admin instead of one mail per task.
+            sections = "\n\n".join(
+                f"Job {n}\n" + "\n".join("  " + line for line in CheckService.describe_assignment(t).splitlines())
+                for n, t in enumerate(created, start=1)
+            )
+            NotificationService.email_admin(
+                f"{len(created)} new job{'' if len(created) == 1 else 's'} assigned",
+                f"The automatic stock scan assigned these checks:\n\n{sections}",
+                link="/checks",
             )
 
         db.session.commit()
@@ -266,6 +365,8 @@ class CheckService:
                     link=f"/scanner?barcode={task.product.barcode}&task={task.id}",
                     email=True,
                 )
+
+            CheckService.email_admin_assignment(task, heading="Job overdue")
 
             NotificationService.notify_roles(
                 ("manager", "admin"),

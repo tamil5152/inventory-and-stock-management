@@ -48,7 +48,7 @@
                 <div class="row-between">
                     <div>
                         <h3>${e(p.name)}</h3>
-                        <p class="muted">${e(p.sku)}, ${e(p.category)}, <code>${e(p.barcode)}</code></p>
+                        <p class="muted">${e(p.sku)}, ${e(p.category)}, <code>${e(p.barcode)}</code>${p.shelf_code ? `, shelf <span class="chip">${e(p.shelf_code)}</span>` : ""}</p>
                     </div>
                     ${result.already_scanned ? '<span class="badge badge-amber">Already scanned this session</span>' : ""}
                 </div>

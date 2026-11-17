@@ -1,48 +1,82 @@
 {% extends "base.html" %}
 
-{% block title %}Users | StockFlow{% endblock %}
-{% block page_heading %}Users{% endblock %}
+{% block title %}Staff | StockFlow{% endblock %}
+{% block page_heading %}Staff{% endblock %}
 
 {% block content %}
 
-<div class="welcome-section">
+<div class="page-head">
     <div>
-        <h1>Users</h1>
-        <p>Staff count shelves and move stock. Managers also edit products, suppliers and stock checks. Admins manage users.</p>
+        <h1>Staff and shelves</h1>
+        <p>Each staff member looks after one or more shelves. Stock checks for products on those shelves go to them by notification and e-mail, and a copy goes to the admin mailbox.</p>
     </div>
-    <button class="primary-button" id="add-user-btn"><svg class="icon"><use href="#i-plus"/></svg> Add user</button>
+    <button class="primary-button" id="add-user-btn"><svg class="icon"><use href="#i-plus"/></svg> Add staff member</button>
 </div>
 
-<div class="panel">
+<section class="panel mail-status" id="mail-status">
+    <div>
+        <h3>Job e-mails</h3>
+        <p class="muted" id="mail-status-text">Checking e-mail settings…</p>
+    </div>
+    <div class="button-row">
+        <input type="email" id="test-email-to" placeholder="Send test to…" aria-label="Test e-mail address">
+        <button class="secondary-button" id="test-email-btn">Send test e-mail</button>
+    </div>
+</section>
+
+<section class="panel">
     <div class="table-wrapper">
         <table>
-            <thead><tr><th>Username</th><th>Email</th><th>Role</th><th>Status</th><th>Created</th><th></th></tr></thead>
+            <thead><tr><th>Name</th><th>Contact</th><th>Role</th><th>Shelves</th><th>Status</th><th></th></tr></thead>
             <tbody id="users-body"><tr><td colspan="6" class="empty-state">Loading…</td></tr></tbody>
         </table>
     </div>
-</div>
+</section>
 
 <div class="modal" id="user-modal">
     <div class="modal-card">
         <div class="modal-header">
-            <h3 id="user-modal-title">Add user</h3>
+            <h3 id="user-modal-title">Add staff member</h3>
             <button class="close-x" data-close-modal="user-modal" aria-label="Close">×</button>
         </div>
-        <form id="user-form" class="form-grid">
+        <form id="user-form" class="form-grid" novalidate>
             <input type="hidden" name="id">
-            <label>Username *<input name="username" required maxlength="80"></label>
-            <label>Email *<input name="email" type="email" required maxlength="120"></label>
+
+            <label class="span-2">Full name *
+                <input name="full_name" required maxlength="120" autocomplete="off" placeholder="Karthik Kumar">
+            </label>
+            <label>E-mail *
+                <input name="email" type="email" required maxlength="120" autocomplete="off" placeholder="karthik@yourshop.in">
+                <span class="form-hint">Job assignments are sent here.</span>
+            </label>
+            <label>Mobile number *
+                <input name="phone" type="tel" required maxlength="20" inputmode="tel" placeholder="+91 98765 43210" pattern="\+?[0-9\s\-]{10,19}">
+            </label>
             <label>Role *
                 <select name="role">
-                    <option value="staff">Staff</option>
-                    <option value="manager">Manager</option>
-                    <option value="admin">Admin</option>
+                    <option value="staff">Staff: counts shelves, moves stock</option>
+                    <option value="manager">Manager: also edits products and checks</option>
+                    <option value="admin">Admin: everything, including staff</option>
                 </select>
             </label>
-            <label><span id="password-label">Password * (min 8)</span><input name="password" type="password" minlength="8" autocomplete="new-password"></label>
+            <label>Username *
+                <input name="username" required maxlength="80" autocomplete="off" placeholder="karthik">
+            </label>
+
+            <fieldset class="span-2 shelf-picker">
+                <legend>Shelves this person looks after</legend>
+                <div id="shelf-options" class="check-grid"><p class="muted">Loading shelves…</p></div>
+                <span class="form-hint">Stock checks for products on these shelves go to this person. <a class="link-button" href="{{ url_for('dashboard.shelves_page') }}">Manage shelves</a></span>
+            </fieldset>
+
+            <label class="span-2"><span id="password-label">Temporary password * (min 8 characters)</span>
+                <input name="password" type="password" minlength="8" autocomplete="new-password">
+                <span class="form-hint">Give it to them in person. Passwords are never e-mailed.</span>
+            </label>
+
             <div class="form-actions span-2">
                 <button type="button" class="secondary-button" data-close-modal="user-modal">Cancel</button>
-                <button type="submit" class="primary-button">Save user</button>
+                <button type="submit" class="primary-button" id="user-submit">Add staff member</button>
             </div>
         </form>
     </div>

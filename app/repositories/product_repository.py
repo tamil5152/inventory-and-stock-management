@@ -81,6 +81,7 @@ class ProductRepository:
             "reorder_level",
             "count_interval_days",
             "supplier_id",
+            "shelf_id",
             "barcode"
         }
 

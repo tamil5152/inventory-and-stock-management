@@ -53,6 +53,12 @@ class Config:
     MAIL_FROM = os.getenv("MAIL_FROM", "")
     APP_BASE_URL = os.getenv("APP_BASE_URL", "http://127.0.0.1:5000")
 
+    # Time zone used for dates in e-mails (IANA name).
+    DISPLAY_TIMEZONE = os.getenv("DISPLAY_TIMEZONE", "Asia/Kolkata")
+
+    # Mailbox that receives a copy of every job assignment.
+    ADMIN_EMAIL = os.getenv("ADMIN_EMAIL", "")
+
 
 class TestConfig(Config):
 

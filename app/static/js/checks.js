@@ -64,8 +64,8 @@
                     <div class="task-reason">${e(t.reason_text)}</div>
                     <div class="task-meta">
                         <span><code>${e(t.sku)}</code></span>
-                        <span>${e(t.category || "")}</span>
-                        <span>${t.assignee ? `Assigned to ${e(t.assignee)}` : "Unassigned"}</span>
+                        <span>${t.shelf_code ? `Shelf <span class="chip">${e(t.shelf_code)}</span> ${e(t.shelf_name)}` : "No shelf"}</span>
+                        <span>${t.assignee ? `Assigned to ${e(t.assignee)}` : "Unassigned"}${t.assignee_phone ? `, <a class="cell-link" href="tel:${e(t.assignee_phone)}">${e(t.assignee_phone)}</a>` : ""}</span>
                         <span>Requested by ${e(t.created_by)}</span>
                         ${open ? `<span>${dueText(t)}</span>` : `<span>Closed ${StockFlow.formatDate(t.completed_at)}${t.completed_by ? " by " + e(t.completed_by) : ""}</span>`}
                     </div>
@@ -105,8 +105,8 @@
         form.product_id.innerHTML = products.data.map((p) =>
             `<option value="${p.id}">${e(p.name)} (${e(p.sku)}), ${p.quantity} in system</option>`).join("");
 
-        form.assigned_to.innerHTML = '<option value="">Automatic</option>' + users.data.map((u) =>
-            `<option value="${u.id}">${e(u.username)} (${e(u.role)})</option>`).join("");
+        form.assigned_to.innerHTML = '<option value="">Automatic (shelf staff first)</option>' + users.data.map((u) =>
+            `<option value="${u.id}">${e(u.name)} (${e(u.role)}${u.shelves.length ? ", shelves " + e(u.shelves.join(", ")) : ""})</option>`).join("");
 
         assigneesLoaded = true;
     }

@@ -58,11 +58,11 @@ class NotificationService:
         config = current_app.config
         return bool(config.get("MAIL_SERVER") and config.get("MAIL_FROM"))
 
-    @staticmethod
-    def send_email(to_address, subject, body, link=None):
+    # Messages "sent" while TESTING are collected here so tests can inspect them.
+    outbox = []
 
-        if not to_address or not NotificationService.email_enabled():
-            return False
+    @staticmethod
+    def _build(to_address, subject, body, link=None):
 
         config = current_app.config
         base_url = config.get("APP_BASE_URL", "").rstrip("/")
@@ -76,8 +76,13 @@ class NotificationService:
             + (f"Open in StockFlow: {base_url}{link}\n" if link and base_url else "")
             + "\nThis is an automatic message from StockFlow."
         )
+        return message
 
-        settings = {
+    @staticmethod
+    def _settings():
+
+        config = current_app.config
+        return {
             "server": config["MAIL_SERVER"],
             "port": int(config.get("MAIL_PORT", 587)),
             "username": config.get("MAIL_USERNAME"),
@@ -85,7 +90,43 @@ class NotificationService:
             "use_tls": config.get("MAIL_USE_TLS", True),
         }
 
-        if config.get("TESTING"):
+    @staticmethod
+    def admin_address():
+        return (current_app.config.get("ADMIN_EMAIL") or "").strip()
+
+    @staticmethod
+    def email_admin(subject, body, link=None):
+        """Send a copy of an event to the admin mailbox (ADMIN_EMAIL)."""
+
+        return NotificationService.send_email(NotificationService.admin_address(), subject, body, link)
+
+    @staticmethod
+    def send_email_now(to_address, subject, body):
+        """Send synchronously and raise on failure (used for the test e-mail button)."""
+
+        if not NotificationService.email_enabled():
+            raise RuntimeError("E-mail is not set up. Add MAIL_SERVER and MAIL_FROM to the .env file and restart.")
+
+        message = NotificationService._build(to_address, subject, body)
+
+        if current_app.config.get("TESTING"):
+            NotificationService.outbox.append(message)
+            return True
+
+        NotificationService._deliver(NotificationService._settings(), message, raise_errors=True)
+        return True
+
+    @staticmethod
+    def send_email(to_address, subject, body, link=None):
+
+        if not to_address or not NotificationService.email_enabled():
+            return False
+
+        message = NotificationService._build(to_address, subject, body, link)
+        settings = NotificationService._settings()
+
+        if current_app.config.get("TESTING"):
+            NotificationService.outbox.append(message)
             return True
 
         # Send in the background so a slow mail server never blocks a request.
@@ -96,7 +137,7 @@ class NotificationService:
         return True
 
     @staticmethod
-    def _deliver(settings, message):
+    def _deliver(settings, message, raise_errors=False):
 
         try:
             with smtplib.SMTP(settings["server"], settings["port"], timeout=15) as smtp:
@@ -105,5 +146,14 @@ class NotificationService:
                 if settings["username"]:
                     smtp.login(settings["username"], settings["password"])
                 smtp.send_message(message)
-        except Exception as error:  # pragma: no cover - network dependent
+        except smtplib.SMTPAuthenticationError as error:
+            log.warning("E-mail login failed for %s: %s", settings["username"], error)
+            if raise_errors:
+                raise RuntimeError(
+                    "Gmail rejected the login. Use a 16-character App Password in MAIL_PASSWORD, "
+                    "not your normal Gmail password."
+                ) from error
+        except Exception as error:  # network dependent
             log.warning("E-mail to %s failed: %s", message["To"], error)
+            if raise_errors:
+                raise RuntimeError(f"Could not send e-mail: {error}") from error

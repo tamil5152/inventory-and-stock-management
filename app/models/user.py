@@ -30,6 +30,16 @@ class User(UserMixin, db.Model):
         index=True
     )
 
+    full_name = db.Column(
+        db.String(120),
+        nullable=True
+    )
+
+    phone = db.Column(
+        db.String(20),
+        nullable=True
+    )
+
     password_hash = db.Column(
         db.String(255),
         nullable=False
@@ -66,6 +76,19 @@ class User(UserMixin, db.Model):
         lazy=True
     )
 
+    shelves = db.relationship(
+        "Shelf",
+        secondary="user_shelves",
+        back_populates="staff",
+        lazy="selectin",
+        order_by="Shelf.code"
+    )
+
+    @property
+    def display_name(self):
+
+        return self.full_name or self.username
+
     def set_password(self, password):
 
         if len(password) < 8:
@@ -97,8 +120,15 @@ class User(UserMixin, db.Model):
             "id": self.id,
             "username": self.username,
             "email": self.email,
+            "full_name": self.full_name,
+            "display_name": self.display_name,
+            "phone": self.phone,
             "role": self.role,
             "is_active": self.is_active_user,
+            "shelves": [
+                {"id": s.id, "code": s.code, "name": s.name}
+                for s in self.shelves
+            ],
             "created_at": (
                 self.created_at.isoformat()
                 if self.created_at else None

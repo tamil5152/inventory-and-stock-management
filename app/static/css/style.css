@@ -622,3 +622,58 @@ input:disabled { background: var(--surface-sunk); color: var(--ink-3); }
     .check-banner .big { font-size: 40px; }
     .hbar-row { grid-template-columns: 80px 1fr 80px; }
 }
+
+/* ---------------------------------------------------------
+   Shelves and staff
+   --------------------------------------------------------- */
+
+.shelf-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 14px; }
+.shelf-card {
+    display: grid; grid-template-columns: auto 1fr; gap: 0;
+    background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius-lg); overflow: hidden;
+}
+.shelf-card.inactive { opacity: .6; }
+/* Shelf code styled like the printed label on a warehouse rack */
+.shelf-code {
+    grid-row: span 2;
+    min-width: 76px; padding: 16px 12px;
+    background: var(--amber); color: var(--graphite);
+    font-family: var(--mono); font-weight: 500; font-size: 22px; letter-spacing: .04em;
+    display: flex; align-items: center; justify-content: center;
+}
+.shelf-body { padding: 14px 16px 10px; min-width: 0; }
+.shelf-body p { font-size: 13px; margin-top: 2px; }
+.shelf-facts { display: flex; flex-direction: column; gap: 3px; margin-top: 10px; font-size: 13px; color: var(--ink-2); }
+.shelf-actions { padding: 0 16px 14px; display: flex; gap: 6px; }
+
+.chip {
+    display: inline-block; font-family: var(--mono); font-size: 12px;
+    padding: 1px 7px; border-radius: 4px; background: var(--amber-tint); color: var(--amber-dark);
+    border: 1px solid #f1d9a3; margin: 1px 0;
+}
+
+.shelf-picker { border: 1px solid var(--line); border-radius: var(--radius); padding: 12px; display: flex; flex-direction: column; gap: 8px; }
+.shelf-picker legend { font-size: 13px; font-weight: 500; color: var(--ink-2); padding: 0 4px; }
+.check-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; max-height: 240px; overflow-y: auto; }
+.check-tile {
+    display: flex; gap: 9px; align-items: flex-start;
+    padding: 8px 10px; border: 1px solid var(--line); border-radius: var(--radius-sm);
+    font-size: 13px; cursor: pointer; background: var(--surface);
+}
+.check-tile:hover { border-color: var(--line-strong); }
+.check-tile input { min-height: 0; width: 15px; height: 15px; margin-top: 2px; accent-color: var(--teal); flex-shrink: 0; }
+.check-tile small { display: block; font-size: 12px; }
+.check-tile:has(input:checked) { border-color: var(--teal); background: var(--teal-tint); }
+
+.mail-status { display: flex; justify-content: space-between; align-items: center; gap: 16px; flex-wrap: wrap; margin-bottom: 18px; border-left: 4px solid var(--teal); }
+.mail-status.off { border-left-color: var(--amber); }
+.mail-status p { font-size: 13px; margin-top: 2px; max-width: 70ch; }
+.mail-status input { width: 240px; }
+
+.cell-link { font-size: 13px; }
+.cell-link:hover { text-decoration: underline; }
+
+@media (max-width: 600px) {
+    .check-grid { grid-template-columns: 1fr; }
+    .mail-status input { width: 100%; }
+}

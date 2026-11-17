@@ -173,7 +173,10 @@ def test_supplier_crud(manager, staff):
 
 
 def test_admin_creates_user(admin, app):
-    r = admin.post("/api/users/", json={"username": "newbie", "email": "n@x.io", "role": "staff", "password": "longpassword"})
+    r = admin.post("/api/users/", json={
+        "username": "newbie", "full_name": "New Bie", "email": "n@x.io", "phone": "+91 98765 43210",
+        "role": "staff", "password": "longpassword",
+    })
     assert r.status_code == 201
     client = app.test_client()
     assert client.post("/login", data={"username": "newbie", "password": "longpassword"}).status_code == 302

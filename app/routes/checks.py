@@ -63,7 +63,7 @@ def list_checks():
 
     return jsonify({
         "success": True,
-        "data": [task.to_dict() for task in tasks],
+        "data": [task.to_dict(include_contact=_is_manager()) for task in tasks],
         "summary": CheckService.open_counts(),
     })
 
@@ -180,17 +180,29 @@ def update_check(task_id):
         if data["assigned_to"] and (not assignee or not assignee.is_active_user):
             return jsonify({"error": "Selected user is not active."}), 400
 
-        if assignee and assignee.id != task.assigned_to:
+        reassigned = assignee is not None and assignee.id != task.assigned_to
+        task.assigned_to = assignee.id if assignee else None
+        task.overdue_notified = False
+
+        if reassigned:
+            db.session.flush()
+            db.session.refresh(task)
             NotificationService.notify(
                 assignee,
                 f"Count {task.product.name} ({task.product.sku})",
-                f"{current_user.username} assigned this stock check to you.",
+                f"{current_user.display_name} assigned this stock check to you.",
                 category="CHECK_ASSIGNED",
                 link=f"/scanner?barcode={task.product.barcode}&task={task.id}",
-                email=True,
             )
-        task.assigned_to = assignee.id if assignee else None
-        task.overdue_notified = False
+            NotificationService.send_email(
+                assignee.email,
+                f"New job: count {task.product.name}",
+                f"Hello {assignee.display_name},\n\n{current_user.display_name} assigned you a stock check.\n\n"
+                f"{CheckService.describe_assignment(task)}",
+                link=f"/scanner?barcode={task.product.barcode}&task={task.id}",
+            )
+            CheckService.email_admin_assignment(task, heading="Job reassigned")
+            log_action(current_user.id, "CHECK_REASSIGNED", "CheckTask", task.id, f"to {assignee.username}")
 
     if "priority" in data:
         priority = str(data["priority"]).upper()
@@ -203,7 +215,7 @@ def update_check(task_id):
 
     db.session.commit()
 
-    return jsonify({"success": True, "message": "Stock check updated.", "data": task.to_dict()})
+    return jsonify({"success": True, "message": "Stock check updated.", "data": task.to_dict(include_contact=True)})
 
 
 @checks_bp.post("/<int:task_id>/cancel")
@@ -236,5 +248,11 @@ def assignees():
 
     return jsonify({
         "success": True,
-        "data": [{"id": u.id, "username": u.username, "role": u.role} for u in users],
+        "data": [
+            {
+                "id": u.id, "username": u.username, "name": u.display_name, "role": u.role,
+                "shelves": [s.code for s in u.shelves],
+            }
+            for u in users
+        ],
     })

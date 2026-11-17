@@ -40,6 +40,7 @@ def create_app(config_class=Config):
     from app.routes.users import users_bp
     from app.routes.checks import checks_bp
     from app.routes.notifications import notifications_bp
+    from app.routes.shelves import shelves_bp
 
     app.register_blueprint(auth_bp)
     app.register_blueprint(dashboard_bp)
@@ -51,6 +52,7 @@ def create_app(config_class=Config):
     app.register_blueprint(users_bp, url_prefix="/api/users")
     app.register_blueprint(checks_bp, url_prefix="/api/checks")
     app.register_blueprint(notifications_bp, url_prefix="/api/notifications")
+    app.register_blueprint(shelves_bp, url_prefix="/api/shelves")
 
     @login_manager.unauthorized_handler
     def unauthorized():

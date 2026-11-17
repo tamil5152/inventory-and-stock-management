@@ -38,16 +38,17 @@
 
         <nav class="nav-group" aria-label="Catalogue">
             {{ nav('dashboard.products_page', 'box', 'Products') }}
+            {{ nav('dashboard.shelves_page', 'shelf', 'Shelves') }}
             {{ nav('dashboard.inventory_page', 'layers', 'Stock movements') }}
             {{ nav('dashboard.suppliers_page', 'truck', 'Suppliers') }}
             {{ nav('dashboard.reports_page', 'chart', 'Reports') }}
-            {% if can('admin') %}{{ nav('dashboard.users_page', 'users', 'Users') }}{% endif %}
+            {% if can('admin') %}{{ nav('dashboard.users_page', 'users', 'Staff') }}{% endif %}
         </nav>
 
         <div class="sidebar-user">
             <span class="avatar" aria-hidden="true">{{ current_user.username[:1] }}</span>
             <div class="who">
-                <strong>{{ current_user.username }}</strong>
+                <strong>{{ current_user.display_name }}</strong>
                 <small>{{ current_user.role }}</small>
             </div>
             <form method="POST" action="{{ url_for('auth.logout') }}">

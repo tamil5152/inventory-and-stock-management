@@ -61,6 +61,13 @@ class Product(db.Model):
         default=30
     )
 
+    shelf_id = db.Column(
+        db.Integer,
+        db.ForeignKey("shelves.id"),
+        nullable=True,
+        index=True
+    )
+
     supplier_id = db.Column(
         db.Integer,
         db.ForeignKey("suppliers.id"),
@@ -104,6 +111,11 @@ class Product(db.Model):
         back_populates="products"
     )
 
+    shelf = db.relationship(
+        "Shelf",
+        back_populates="products"
+    )
+
     def to_dict(self):
 
         return {
@@ -117,6 +129,9 @@ class Product(db.Model):
             "reorder_level": self.reorder_level,
             "count_interval_days": self.count_interval_days,
             "supplier_id": self.supplier_id,
+            "shelf_id": self.shelf_id,
+            "shelf_code": self.shelf.code if self.shelf else None,
+            "shelf_name": self.shelf.name if self.shelf else None,
             "supplier_name": (
                 self.supplier.company_name if self.supplier else None
             ),

@@ -8,6 +8,7 @@ from app.models.inventory import (
 from app.models.supplier import Supplier
 from app.models.audit import AuditLog
 from app.models.alerts import CheckTask, Notification
+from app.models.shelf import Shelf, user_shelves
 
 __all__ = [
     "User",
@@ -19,4 +20,5 @@ __all__ = [
     "AuditLog",
     "CheckTask",
     "Notification",
+    "Shelf",
 ]

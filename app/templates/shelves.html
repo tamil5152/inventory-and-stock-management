@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+
+{% block title %}Shelves | StockFlow{% endblock %}
+{% block page_heading %}Shelves{% endblock %}
+
+{% block content %}
+
+<div class="page-head">
+    <div>
+        <h1>Shelves</h1>
+        <p>Where products are kept and who looks after them. When a product needs counting, the person on its shelf is notified.</p>
+    </div>
+    {% if can('admin', 'manager') %}
+    <button class="primary-button" id="add-shelf-btn"><svg class="icon"><use href="#i-plus"/></svg> Add shelf</button>
+    {% endif %}
+</div>
+
+<div class="shelf-grid" id="shelf-grid"><p class="muted">Loading…</p></div>
+
+{% if can('admin', 'manager') %}
+<div class="modal" id="shelf-modal">
+    <div class="modal-card">
+        <div class="modal-header">
+            <h3 id="shelf-modal-title">Add shelf</h3>
+            <button class="close-x" data-close-modal="shelf-modal" aria-label="Close">×</button>
+        </div>
+        <form id="shelf-form" class="form-grid">
+            <input type="hidden" name="id">
+            <label>Shelf code *
+                <input name="code" required maxlength="20" placeholder="A1" pattern="[A-Za-z0-9][A-Za-z0-9\-]*">
+                <span class="form-hint">Short label printed on the shelf.</span>
+            </label>
+            <label>Name *
+                <input name="name" required maxlength="100" placeholder="Keyboards & Mice">
+            </label>
+            <label class="span-2">Location
+                <input name="location" maxlength="150" placeholder="Aisle A, left rack">
+            </label>
+            <fieldset class="span-2 shelf-picker">
+                <legend>Who looks after this shelf</legend>
+                <div id="staff-options" class="check-grid"></div>
+            </fieldset>
+            <div class="form-actions span-2">
+                <button type="button" class="secondary-button" data-close-modal="shelf-modal">Cancel</button>
+                <button type="submit" class="primary-button" id="shelf-submit">Add shelf</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endif %}
+
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/shelves.js') }}"></script>
+{% endblock %}

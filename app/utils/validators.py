@@ -104,3 +104,28 @@ def validate_movement_type(movement_type):
         raise ValueError("Invalid stock movement type.")
 
     return movement_type
+
+
+def validate_phone(phone):
+    """Mobile number: optional +, then 10 to 15 digits (spaces and dashes allowed)."""
+
+    phone = validate_required(phone, "Mobile number")
+    compact = re.sub(r"[\s\-()]", "", phone)
+
+    if not re.fullmatch(r"\+?\d{10,15}", compact):
+        raise ValueError("Enter a valid mobile number, for example +91 98765 43210.")
+
+    return compact
+
+
+def validate_full_name(name):
+
+    name = validate_required(name, "Full name")
+
+    if len(name) > 120:
+        raise ValueError("Full name must be at most 120 characters.")
+
+    if not re.fullmatch(r"[A-Za-z][A-Za-z .'\-]*", name):
+        raise ValueError("Full name may contain letters, spaces, dots, apostrophes and hyphens.")
+
+    return " ".join(name.split())

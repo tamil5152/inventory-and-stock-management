@@ -11,6 +11,11 @@ from app.extensions import db
 NEW_COLUMNS = {
     "products": {
         "count_interval_days": "INTEGER NOT NULL DEFAULT 30",
+        "shelf_id": "INTEGER REFERENCES shelves(id)",
+    },
+    "users": {
+        "full_name": "VARCHAR(120)",
+        "phone": "VARCHAR(20)",
     },
 }
 
