@@ -1,0 +1,111 @@
+{% extends "base.html" %}
+
+{% block title %}Reports | StockFlow{% endblock %}
+{% block page_heading %}Reports{% endblock %}
+
+{% block content %}
+
+<div class="welcome-section">
+    <div>
+        <h1>Reports</h1>
+        <p>Stock value, movement history, count mismatches and risk, with CSV and PDF downloads.</p>
+    </div>
+    <div class="button-row">
+        <a class="secondary-button" href="{{ url_for('reports.export_stock_csv') }}"><svg class="icon"><use href="#i-download"/></svg> Stock CSV</a>
+        <a class="primary-button" href="{{ url_for('reports.export_stock_pdf') }}"><svg class="icon"><use href="#i-download"/></svg> Stock PDF</a>
+    </div>
+</div>
+
+<div class="tabs" id="report-tabs">
+    <button class="tab active" data-tab="stock">Stock valuation</button>
+    <button class="tab" data-tab="movements">Movements</button>
+    <button class="tab" data-tab="discrepancies">Discrepancies</button>
+    <button class="tab" data-tab="risk">Risk ranking</button>
+    {% if can('admin') %}<button class="tab" data-tab="audit">Audit log</button>{% endif %}
+</div>
+
+<section class="tab-panel" data-panel="stock">
+    <div class="panel" style="margin-bottom:20px">
+        <div class="panel-heading"><h3>By category</h3></div>
+        <div class="table-wrapper">
+            <table class="compact">
+                <thead><tr><th>Category</th><th class="num">Products</th><th class="num">Units</th><th class="num">Value</th></tr></thead>
+                <tbody id="category-body"></tbody>
+            </table>
+        </div>
+    </div>
+    <div class="panel">
+        <div class="panel-heading"><h3>All products</h3></div>
+        <div class="table-wrapper">
+            <table>
+                <thead><tr><th>SKU</th><th>Product</th><th>Category</th><th>Supplier</th><th class="num">Qty</th><th class="num">Unit price</th><th class="num">Value</th><th>Status</th></tr></thead>
+                <tbody id="stock-body"></tbody>
+            </table>
+        </div>
+    </div>
+</section>
+
+<section class="tab-panel" data-panel="movements" hidden>
+    <div class="panel">
+        <form class="toolbar" id="movement-filter">
+            <label>From <input type="date" name="start"></label>
+            <label>To <input type="date" name="end"></label>
+            <select name="type">
+                <option value="">All types</option>
+                <option value="STOCK_IN">Stock in</option>
+                <option value="STOCK_OUT">Stock out</option>
+                <option value="ADJUSTMENT">Adjustment</option>
+            </select>
+            <button class="primary-button" type="submit">Apply</button>
+            <a class="secondary-button" id="movement-csv" href="{{ url_for('reports.export_movements_csv') }}"><svg class="icon"><use href="#i-download"/></svg> Download CSV</a>
+        </form>
+        <div class="table-wrapper">
+            <table>
+                <thead><tr><th>Date</th><th>Product</th><th>Type</th><th class="num">Qty</th><th class="num">Before</th><th class="num">After</th><th>Reference</th><th>By</th></tr></thead>
+                <tbody id="movement-body"></tbody>
+            </table>
+        </div>
+    </div>
+</section>
+
+<section class="tab-panel" data-panel="discrepancies" hidden>
+    <div class="panel">
+        <div class="table-wrapper">
+            <table>
+                <thead><tr><th>Date</th><th>Barcode</th><th>Product</th><th class="num">Expected</th><th class="num">Counted</th><th class="num">Diff</th><th>Status</th><th>Risk</th><th>By</th></tr></thead>
+                <tbody id="discrepancy-body"></tbody>
+            </table>
+        </div>
+    </div>
+</section>
+
+<section class="tab-panel" data-panel="risk" hidden>
+    <div class="panel">
+        <div class="panel-heading"><p>Sorted with merge sort, highest risk first. Products with zero risk are hidden.</p></div>
+        <div class="table-wrapper">
+            <table>
+                <thead><tr><th>#</th><th>Product</th><th class="num">Qty</th><th class="num">Reorder</th><th>Last scan</th><th>Risk</th></tr></thead>
+                <tbody id="risk-body"></tbody>
+            </table>
+        </div>
+    </div>
+</section>
+
+{% if can('admin') %}
+<section class="tab-panel" data-panel="audit" hidden>
+    <div class="panel">
+        <div class="table-wrapper">
+            <table>
+                <thead><tr><th>Date</th><th>User</th><th>Action</th><th>Entity</th><th>Details</th><th>IP</th></tr></thead>
+                <tbody id="audit-body"></tbody>
+            </table>
+        </div>
+    </div>
+</section>
+{% endif %}
+
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/reports.js') }}"></script>
+{% endblock %}

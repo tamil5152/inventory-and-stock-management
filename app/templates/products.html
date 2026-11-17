@@ -1,0 +1,89 @@
+{% extends "base.html" %}
+
+{% block title %}Products | StockFlow{% endblock %}
+{% block page_heading %}Products{% endblock %}
+
+{% block content %}
+
+<div class="welcome-section">
+    <div>
+        <h1>Products</h1>
+        <p>Every product has its own SKU and barcode. Set how often each one should be physically counted.</p>
+    </div>
+    {% if can('admin', 'manager') %}
+    <button class="primary-button" id="add-product-btn"><svg class="icon"><use href="#i-plus"/></svg> Add product</button>
+    {% endif %}
+</div>
+
+<div class="panel">
+
+    <div class="toolbar">
+        <input type="search" id="product-search" placeholder="Search name, SKU, barcode or category…">
+        <select id="category-filter"><option value="">All categories</option></select>
+        <select id="status-filter">
+            <option value="">All stock levels</option>
+            <option value="IN_STOCK">In stock</option>
+            <option value="LOW_STOCK">Low stock</option>
+            <option value="OUT_OF_STOCK">Out of stock</option>
+        </select>
+        {% if can('admin', 'manager') %}
+        <label class="checkbox"><input type="checkbox" id="archived-toggle"> Show archived</label>
+        {% endif %}
+    </div>
+
+    <div class="table-wrapper">
+        <table>
+            <thead>
+                <tr>
+                    <th>Product</th><th>Barcode</th><th>Category</th><th>Supplier</th>
+                    <th class="num">Price</th><th class="num">Qty</th><th>Status</th><th></th>
+                </tr>
+            </thead>
+            <tbody id="products-body">
+                <tr><td colspan="8" class="empty-state">Loading products…</td></tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Add / edit product -->
+<div class="modal" id="product-modal">
+    <div class="modal-card">
+        <div class="modal-header">
+            <h3 id="product-modal-title">Add product</h3>
+            <button class="close-x" data-close-modal="product-modal" aria-label="Close">×</button>
+        </div>
+
+        <form id="product-form" class="form-grid">
+            <input type="hidden" name="id">
+
+            <label>SKU *<input name="sku" required maxlength="50" placeholder="ELEC-001"></label>
+            <label>Barcode *<input name="barcode" required maxlength="100" placeholder="8901001000011"></label>
+            <label class="span-2">Name *<input name="name" required maxlength="150"></label>
+            <label>Category<input name="category" list="category-list" maxlength="100" placeholder="General"></label>
+            <label>Supplier<select name="supplier_id" id="supplier-select"><option value="">— None —</option></select></label>
+            <label>Unit price (Rs.) *<input name="unit_price" type="number" min="0" step="0.01" required value="0"></label>
+            <label>Reorder level *<input name="reorder_level" type="number" min="0" step="1" required value="5"></label>
+            <label>Count every (days) *<input name="count_interval_days" type="number" min="1" max="365" step="1" required value="30">
+                <span class="form-hint">Staff get a stock check when this many days pass without a count.</span></label>
+            <label id="opening-qty-field">Opening quantity<input name="quantity" type="number" min="0" step="1" value="0"></label>
+            <label class="span-2">Description<textarea name="description" rows="2" maxlength="2000"></textarea></label>
+
+            <datalist id="category-list"></datalist>
+
+            <div class="form-actions span-2">
+                <button type="button" class="secondary-button" data-close-modal="product-modal">Cancel</button>
+                <button type="submit" class="primary-button">Save product</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+{% include "_stock_modal.html" %}
+
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/stock_modal.js') }}"></script>
+<script src="{{ url_for('static', filename='js/products.js') }}"></script>
+{% endblock %}

@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+
+{% block title %}Sign in | StockFlow{% endblock %}
+
+{% block public_content %}
+
+<div class="login-page">
+
+    <section class="login-side">
+        <div>
+            <div class="brand" style="padding:0">
+                <span class="brand-mark"><svg class="icon"><use href="#i-box"/></svg></span>
+                <span>StockFlow</span>
+            </div>
+
+            <h1>Know what is really on the shelf.</h1>
+            <p>Track stock in and out, count shelves with a barcode scanner, and get told which products need a physical check before the numbers drift.</p>
+        </div>
+
+        <div class="login-facts">
+            <div><strong>Scan & count</strong><span>USB scanner, keyboard or phone camera</span></div>
+            <div><strong>Shelf alerts</strong><span>Low stock and mismatches become tasks</span></div>
+            <div><strong>Reports</strong><span>Stock value, movements, CSV and PDF</span></div>
+        </div>
+    </section>
+
+    <section class="login-main">
+        <div class="login-card">
+            <h2>Sign in</h2>
+            <p>Use the account your manager gave you.</p>
+
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% for category, message in messages %}
+                    <div class="alert {{ category }}">{{ message }}</div>
+                {% endfor %}
+            {% endwith %}
+
+            <form method="POST" action="{{ url_for('auth.login', next=request.args.get('next')) }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+                <label>Username
+                    <input type="text" name="username" autocomplete="username" required autofocus>
+                </label>
+
+                <label>Password
+                    <input type="password" name="password" autocomplete="current-password" required>
+                </label>
+
+                <button class="primary-button" type="submit">Sign in</button>
+            </form>
+        </div>
+    </section>
+
+</div>
+
+{% endblock %}

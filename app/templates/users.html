@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+
+{% block title %}Users | StockFlow{% endblock %}
+{% block page_heading %}Users{% endblock %}
+
+{% block content %}
+
+<div class="welcome-section">
+    <div>
+        <h1>Users</h1>
+        <p>Staff count shelves and move stock. Managers also edit products, suppliers and stock checks. Admins manage users.</p>
+    </div>
+    <button class="primary-button" id="add-user-btn"><svg class="icon"><use href="#i-plus"/></svg> Add user</button>
+</div>
+
+<div class="panel">
+    <div class="table-wrapper">
+        <table>
+            <thead><tr><th>Username</th><th>Email</th><th>Role</th><th>Status</th><th>Created</th><th></th></tr></thead>
+            <tbody id="users-body"><tr><td colspan="6" class="empty-state">Loading…</td></tr></tbody>
+        </table>
+    </div>
+</div>
+
+<div class="modal" id="user-modal">
+    <div class="modal-card">
+        <div class="modal-header">
+            <h3 id="user-modal-title">Add user</h3>
+            <button class="close-x" data-close-modal="user-modal" aria-label="Close">×</button>
+        </div>
+        <form id="user-form" class="form-grid">
+            <input type="hidden" name="id">
+            <label>Username *<input name="username" required maxlength="80"></label>
+            <label>Email *<input name="email" type="email" required maxlength="120"></label>
+            <label>Role *
+                <select name="role">
+                    <option value="staff">Staff</option>
+                    <option value="manager">Manager</option>
+                    <option value="admin">Admin</option>
+                </select>
+            </label>
+            <label><span id="password-label">Password * (min 8)</span><input name="password" type="password" minlength="8" autocomplete="new-password"></label>
+            <div class="form-actions span-2">
+                <button type="button" class="secondary-button" data-close-modal="user-modal">Cancel</button>
+                <button type="submit" class="primary-button">Save user</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/users.js') }}"></script>
+{% endblock %}

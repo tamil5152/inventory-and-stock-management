@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+
+{% block title %}Suppliers | StockFlow{% endblock %}
+{% block page_heading %}Suppliers{% endblock %}
+
+{% block content %}
+
+<div class="welcome-section">
+    <div>
+        <h1>Suppliers</h1>
+        <p>Companies you buy from. Link them to products to see who to reorder from.</p>
+    </div>
+    {% if can('admin', 'manager') %}
+    <button class="primary-button" id="add-supplier-btn"><svg class="icon"><use href="#i-plus"/></svg> Add supplier</button>
+    {% endif %}
+</div>
+
+<div class="panel">
+    <div class="toolbar">
+        <input type="search" id="supplier-search" placeholder="Search suppliers…">
+        {% if can('admin', 'manager') %}
+        <label class="checkbox"><input type="checkbox" id="inactive-toggle"> Show inactive</label>
+        {% endif %}
+    </div>
+
+    <div class="table-wrapper">
+        <table>
+            <thead>
+                <tr><th>Company</th><th>Contact</th><th>Phone</th><th>Email</th><th>GSTIN / Tax ID</th><th class="num">Products</th><th>Status</th><th></th></tr>
+            </thead>
+            <tbody id="suppliers-body"><tr><td colspan="8" class="empty-state">Loading…</td></tr></tbody>
+        </table>
+    </div>
+</div>
+
+<div class="modal" id="supplier-modal">
+    <div class="modal-card">
+        <div class="modal-header">
+            <h3 id="supplier-modal-title">Add supplier</h3>
+            <button class="close-x" data-close-modal="supplier-modal" aria-label="Close">×</button>
+        </div>
+
+        <form id="supplier-form" class="form-grid">
+            <input type="hidden" name="id">
+            <label class="span-2">Company name *<input name="company_name" required maxlength="150"></label>
+            <label>Contact person<input name="contact_person" maxlength="100"></label>
+            <label>Phone *<input name="phone" required maxlength="20" placeholder="+91 98765 43210"></label>
+            <label>Email<input name="email" type="email" maxlength="120"></label>
+            <label>GSTIN / Tax ID<input name="tax_id" maxlength="30"></label>
+            <label class="span-2">Address<textarea name="address" rows="2" maxlength="1000"></textarea></label>
+
+            <div class="form-actions span-2">
+                <button type="button" class="secondary-button" data-close-modal="supplier-modal">Cancel</button>
+                <button type="submit" class="primary-button">Save supplier</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/suppliers.js') }}"></script>
+{% endblock %}

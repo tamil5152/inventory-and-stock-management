@@ -1,0 +1,179 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard | StockFlow{% endblock %}
+{% block page_heading %}Dashboard{% endblock %}
+
+{% block content %}
+
+{% if checks.count %}
+<section class="check-banner" aria-label="Shelf checks waiting">
+    <div class="big">{{ checks.count }}</div>
+    <div>
+        <h2>
+            {% if checks.scope == 'you' %}
+                {{ 'shelf needs' if checks.count == 1 else 'shelves need' }} your physical count
+            {% else %}
+                {{ 'shelf is' if checks.count == 1 else 'shelves are' }} waiting for a physical count
+            {% endif %}
+        </h2>
+        <p>
+            {% if checks.first %}Start with {{ checks.first.product_name }}: {{ checks.first.reason_text|lower }}.{% endif %}
+        </p>
+        <div class="meta">
+            <span><strong>{{ checks.high }}</strong> high priority</span>
+            <span><strong>{{ checks.overdue }}</strong> overdue</span>
+        </div>
+    </div>
+    <div class="banner-cta button-row">
+        {% if checks.first %}
+        <a class="amber-button" href="{{ url_for('dashboard.scanner_page', barcode=checks.first.barcode, task=checks.first.id) }}">
+            <svg class="icon"><use href="#i-scan"/></svg> Count {{ checks.first.product_name }}
+        </a>
+        {% endif %}
+        <a class="secondary-button" href="{{ url_for('dashboard.checks_page') }}">See all checks</a>
+    </div>
+</section>
+{% else %}
+<section class="check-banner calm" aria-label="Shelf checks">
+    <div class="big"><svg class="icon" style="width:44px;height:44px"><use href="#i-check"/></svg></div>
+    <div>
+        <h2>No shelf checks waiting</h2>
+        <p>New checks appear here when stock runs low, a count does not match, or a product is due for its cycle count.</p>
+    </div>
+    <div class="banner-cta"><a class="secondary-button" href="{{ url_for('dashboard.scanner_page') }}">Count a shelf anyway</a></div>
+</section>
+{% endif %}
+
+<section class="kpi-strip" aria-label="Key figures">
+    <div class="kpi">
+        <div class="kpi-label">Active products</div>
+        <div class="kpi-value">{{ summary.total_products }}</div>
+        <div class="kpi-note">From {{ summary.total_suppliers }} supplier{{ '' if summary.total_suppliers == 1 else 's' }}</div>
+    </div>
+    <div class="kpi">
+        <div class="kpi-label">Units in stock</div>
+        <div class="kpi-value">{{ "{:,}".format(summary.total_units) }}</div>
+        <div class="kpi-note">Worth Rs. {{ "{:,.0f}".format(summary.total_stock_value) }}</div>
+    </div>
+    <div class="kpi {{ 'warn' if summary.low_stock_count }}">
+        <div class="kpi-label">Low or out of stock</div>
+        <div class="kpi-value">{{ summary.low_stock_count }}</div>
+        <div class="kpi-note">At or below reorder level</div>
+    </div>
+    <div class="kpi {{ 'bad' if summary.discrepancy_count }}">
+        <div class="kpi-label">Count mismatches</div>
+        <div class="kpi-value">{{ summary.discrepancy_count }}</div>
+        <div class="kpi-note">Shelf count differed from system</div>
+    </div>
+</section>
+
+<div class="grid-3-2">
+    <section class="panel">
+        <div class="panel-heading row-between">
+            <div>
+                <h3>Stock in and out</h3>
+                <p>Units moved per day, last 14 days</p>
+            </div>
+            <div class="legend"><span><i style="background:var(--teal)"></i>In</span><span><i style="background:var(--amber)"></i>Out</span></div>
+        </div>
+        <svg class="chart" id="trend-chart" role="img" aria-label="Units moved in and out per day"></svg>
+    </section>
+
+    <section class="panel">
+        <div class="panel-heading">
+            <h3>Stock value by category</h3>
+            <p>Quantity × unit price</p>
+        </div>
+        <div class="hbar-list" id="category-bars"><p class="muted">Loading…</p></div>
+    </section>
+</div>
+
+<div class="two-column">
+
+    <section class="panel">
+        <div class="panel-heading">
+            <h3>Reorder suggestions</h3>
+            <p>Ordering up to twice the reorder level</p>
+        </div>
+        <div class="table-wrapper">
+            <table class="compact">
+                <thead><tr><th>Product</th><th class="num">In stock</th><th class="num">Reorder at</th><th class="num">Order</th></tr></thead>
+                <tbody>
+                {% for r in recommendations %}
+                    <tr>
+                        <td><div class="cell-title">{{ r.product_name }}</div><div class="cell-sub">{{ r.sku }}</div></td>
+                        <td class="num">{{ r.current_quantity }}</td>
+                        <td class="num">{{ r.reorder_level }}</td>
+                        <td class="num"><strong>{{ r.suggested_quantity }}</strong></td>
+                    </tr>
+                {% else %}
+                    <tr><td colspan="4" class="empty-state">Every product is above its reorder level.</td></tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+    <section class="panel">
+        <div class="panel-heading">
+            <h3>Highest risk</h3>
+            <p>Low stock and recent count mismatches, worst first</p>
+        </div>
+        <div class="table-wrapper">
+            <table class="compact">
+                <thead><tr><th>Product</th><th class="num">In stock</th><th>Risk</th></tr></thead>
+                <tbody>
+                {% for p in priority_products %}
+                    <tr>
+                        <td><div class="cell-title">{{ p.name }}</div><div class="cell-sub">{{ p.sku }}</div></td>
+                        <td class="num">{{ p.quantity }}</td>
+                        <td><span class="badge risk-{{ p.risk_level|lower }}">{{ p.risk_level|capitalize }}, {{ p.risk_score|round|int }}</span></td>
+                    </tr>
+                {% else %}
+                    <tr><td colspan="3" class="empty-state">Nothing at risk right now.</td></tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+</div>
+
+<section class="panel">
+    <div class="panel-heading row-between">
+        <div>
+            <h3>Latest stock movements</h3>
+            <p>The last eight changes to stock levels</p>
+        </div>
+        <a class="link-button" href="{{ url_for('dashboard.inventory_page') }}">View all movements</a>
+    </div>
+
+    <div class="table-wrapper">
+        <table>
+            <thead>
+                <tr><th>Product</th><th>Movement</th><th class="num">Qty</th><th class="num">Before</th><th class="num">After</th><th>By</th><th>When</th></tr>
+            </thead>
+            <tbody>
+                {% for m in summary.recent_movements %}
+                <tr>
+                    <td><div class="cell-title">{{ m.product_name }}</div><div class="cell-sub">{{ m.sku }}</div></td>
+                    <td><span class="badge move-{{ m.movement_type|lower }}">{{ m.movement_type|replace('_', ' ')|capitalize }}</span></td>
+                    <td class="num">{{ m.quantity }}</td>
+                    <td class="num">{{ m.previous_quantity }}</td>
+                    <td class="num">{{ m.new_quantity }}</td>
+                    <td>{{ m.username or 'System' }}</td>
+                    <td class="local-time" data-time="{{ m.created_at }}">{{ m.created_at[:16]|replace('T', ' ') if m.created_at }}</td>
+                </tr>
+                {% else %}
+                <tr><td colspan="7" class="empty-state">No stock has moved yet. Record a delivery from Stock movements.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</section>
+
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
+{% endblock %}

@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+    <title>{% block title %}StockFlow{% endblock %}</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%23e8a317'/%3E%3Cpath d='M16 7 7 11.5v9L16 25l9-4.5v-9z' fill='none' stroke='%231e2a2f' stroke-width='2.4' stroke-linejoin='round'/%3E%3C/svg%3E">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/fonts.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+
+<body>
+{% include "_icons.html" %}
+
+{% if current_user.is_authenticated %}
+
+{% set ep = request.endpoint %}
+{% macro nav(endpoint, icon, label, extra='') -%}
+    <a href="{{ url_for(endpoint) }}" class="nav-link {{ 'active' if ep == endpoint }}" {% if ep == endpoint %}aria-current="page"{% endif %}>
+        <svg class="icon"><use href="#i-{{ icon }}"/></svg><span>{{ label }}</span>{{ extra|safe }}
+    </a>
+{%- endmacro %}
+
+<div class="app-layout">
+
+    <aside class="sidebar" id="sidebar">
+        <div class="brand">
+            <span class="brand-mark"><svg class="icon"><use href="#i-box"/></svg></span>
+            <span>StockFlow</span>
+        </div>
+
+        <nav class="nav-group" aria-label="Main">
+            {{ nav('dashboard.index', 'dashboard', 'Dashboard') }}
+            {{ nav('dashboard.checks_page', 'clipboard', 'Stock checks', '<span class="nav-count" id="nav-check-count" hidden></span>') }}
+            {{ nav('dashboard.scanner_page', 'scan', 'Scan & count') }}
+        </nav>
+
+        <nav class="nav-group" aria-label="Catalogue">
+            {{ nav('dashboard.products_page', 'box', 'Products') }}
+            {{ nav('dashboard.inventory_page', 'layers', 'Stock movements') }}
+            {{ nav('dashboard.suppliers_page', 'truck', 'Suppliers') }}
+            {{ nav('dashboard.reports_page', 'chart', 'Reports') }}
+            {% if can('admin') %}{{ nav('dashboard.users_page', 'users', 'Users') }}{% endif %}
+        </nav>
+
+        <div class="sidebar-user">
+            <span class="avatar" aria-hidden="true">{{ current_user.username[:1] }}</span>
+            <div class="who">
+                <strong>{{ current_user.username }}</strong>
+                <small>{{ current_user.role }}</small>
+            </div>
+            <form method="POST" action="{{ url_for('auth.logout') }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button type="submit" class="icon-ghost" title="Log out" aria-label="Log out">
+                    <svg class="icon"><use href="#i-logout"/></svg>
+                </button>
+            </form>
+        </div>
+    </aside>
+    <div class="scrim" data-toggle-nav></div>
+
+    <main class="main-content">
+
+        <header class="topbar">
+            <button class="icon-button menu-toggle" data-toggle-nav aria-label="Open menu">
+                <svg class="icon"><use href="#i-menu"/></svg>
+            </button>
+
+            <h2>{% block page_heading %}Dashboard{% endblock %}</h2>
+
+            <form class="top-search" action="{{ url_for('dashboard.products_page') }}" method="get" role="search">
+                <svg class="icon"><use href="#i-search"/></svg>
+                <input type="search" name="q" placeholder="Find a product, SKU or barcode" aria-label="Search products">
+            </form>
+
+            <div class="actions notif-wrap">
+                <button class="icon-button" id="bell" aria-label="Notifications" aria-expanded="false">
+                    <svg class="icon"><use href="#i-bell"/></svg>
+                    <span class="bell-dot" id="bell-count" hidden>0</span>
+                </button>
+
+                <div class="notif-panel" id="notif-panel" hidden>
+                    <div class="notif-head">
+                        <h3>Notifications</h3>
+                        <button class="link-button" id="notif-read-all">Mark all as read</button>
+                    </div>
+                    <div class="notif-list" id="notif-list">
+                        <p class="empty-state">Loading…</p>
+                    </div>
+                    <div class="notif-foot">
+                        <button class="link-button" id="desktop-alerts-btn" hidden>Turn on desktop alerts</button>
+                        <a class="link-button" href="{{ url_for('dashboard.checks_page') }}">Open stock checks</a>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <section class="content">
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% for category, message in messages %}
+                    <div class="alert {{ category }}">{{ message }}</div>
+                {% endfor %}
+            {% endwith %}
+
+            {% block content %}{% endblock %}
+        </section>
+
+    </main>
+
+</div>
+
+<div id="toast-container" class="toast-container" aria-live="polite"></div>
+
+<script>
+    window.CURRENT_USER = {
+        id: {{ current_user.id }},
+        username: {{ current_user.username|tojson }},
+        role: {{ current_user.role|tojson }}
+    };
+</script>
+<script src="{{ url_for('static', filename='js/app.js') }}"></script>
+<script src="{{ url_for('static', filename='js/notifications.js') }}"></script>
+{% block scripts %}{% endblock %}
+
+{% else %}
+
+{% block public_content %}{% endblock %}
+
+{% endif %}
+
+</body>
+</html>

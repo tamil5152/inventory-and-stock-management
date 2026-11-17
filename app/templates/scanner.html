@@ -1,0 +1,93 @@
+{% extends "base.html" %}
+
+{% block title %}Scan & count | StockFlow{% endblock %}
+{% block page_heading %}Scan & count{% endblock %}
+
+{% block content %}
+
+<div class="page-head">
+    <div>
+        <h1>Scan and count</h1>
+        <p>Scan the barcode, count what is physically on the shelf, and enter that number. The system quantity stays hidden until you submit, so the count is not influenced by it.</p>
+    </div>
+    <div class="button-row">
+        <span class="badge badge-blue plain" id="session-count">0 counted this session</span>
+        <button class="secondary-button" id="reset-session">Start a new session</button>
+    </div>
+</div>
+
+<div class="two-column">
+
+    <div class="panel">
+        <div class="panel-heading">
+            <h3>Step 1: scan the barcode</h3>
+            <p>A USB scanner types the code and presses Enter for you.</p>
+        </div>
+
+        <div class="task-context" id="task-context" hidden>
+            <svg class="icon"><use href="#i-clipboard"/></svg>
+            <span id="task-context-text"></span>
+        </div>
+
+        <form id="lookup-form" class="scan-row">
+            <input id="barcode-input" name="barcode" placeholder="Scan or type barcode…" autocomplete="off" autofocus required>
+            <button class="primary-button" type="submit">Look up</button>
+            <button class="secondary-button" type="button" id="camera-btn"><svg class="icon"><use href="#i-camera"/></svg> Camera</button>
+        </form>
+
+        <div id="camera-box" class="camera-box" hidden>
+            <video id="camera-video" playsinline muted></video>
+            <p class="muted" id="camera-status">Point the camera at a barcode…</p>
+            <button class="secondary-button" type="button" id="camera-stop">Stop camera</button>
+        </div>
+
+        <div id="product-card" class="product-card" hidden></div>
+
+        <form id="verify-form" class="form-grid" hidden>
+            <label class="span-2">Step 2: how many are on the shelf?
+                <input id="physical-input" name="physical_quantity" type="number" min="0" step="1" required>
+            </label>
+            <div class="form-actions span-2">
+                <button type="button" class="secondary-button" id="clear-scan">Clear</button>
+                <button type="submit" class="primary-button">Record count</button>
+            </div>
+        </form>
+    </div>
+
+    <div class="panel">
+        <div class="panel-heading">
+            <h3>Result</h3>
+            <p>Risk score from 0 to 100, based on the mismatch, low stock and unexpected stock</p>
+        </div>
+        <div id="result-box" class="result-box empty-state">Your count result will show here.</div>
+    </div>
+
+</div>
+
+<div class="panel">
+    <div class="panel-heading row-between">
+        <div>
+            <h3>Recent counts</h3>
+            <p>Latest shelf counts from everyone</p>
+        </div>
+        <label class="checkbox"><input type="checkbox" id="issues-only"> Only mismatches</label>
+    </div>
+
+    <div class="table-wrapper">
+        <table>
+            <thead>
+                <tr>
+                    <th>Date</th><th>Barcode</th><th>Product</th><th class="num">Expected</th>
+                    <th class="num">Counted</th><th class="num">Diff</th><th>Status</th><th>Risk</th><th>By</th>
+                </tr>
+            </thead>
+            <tbody id="scan-history"><tr><td colspan="9" class="empty-state">Loading…</td></tr></tbody>
+        </table>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/scanner.js') }}"></script>
+{% endblock %}

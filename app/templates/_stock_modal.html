@@ -1,0 +1,32 @@
+<!-- Shared stock in / out / adjust modal -->
+<div class="modal" id="stock-modal">
+    <div class="modal-card">
+        <div class="modal-header">
+            <h3>Update stock</h3>
+            <button class="close-x" data-close-modal="stock-modal" aria-label="Close">×</button>
+        </div>
+
+        <p class="muted" id="stock-modal-product" style="margin-bottom:16px"></p>
+
+        <form id="stock-form" class="form-grid">
+            <input type="hidden" name="product_id">
+
+            <div class="span-2 segmented" id="movement-type">
+                <label><input type="radio" name="movement_type" value="STOCK_IN" checked><span>Stock in</span></label>
+                <label><input type="radio" name="movement_type" value="STOCK_OUT"><span>Stock out</span></label>
+                {% if can('admin', 'manager') %}
+                <label><input type="radio" name="movement_type" value="ADJUSTMENT"><span>Set exact count</span></label>
+                {% endif %}
+            </div>
+
+            <label><span id="stock-qty-label">Quantity *</span><input name="quantity" type="number" min="0" step="1" required></label>
+            <label>Reference no.<input name="reference_number" maxlength="100" placeholder="PO / invoice number"></label>
+            <label class="span-2">Notes<input name="notes" maxlength="500" placeholder="Reason for this movement"></label>
+
+            <div class="form-actions span-2">
+                <button type="button" class="secondary-button" data-close-modal="stock-modal">Cancel</button>
+                <button type="submit" class="primary-button">Save movement</button>
+            </div>
+        </form>
+    </div>
+</div>

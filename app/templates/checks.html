@@ -1,0 +1,90 @@
+{% extends "base.html" %}
+
+{% block title %}Stock checks | StockFlow{% endblock %}
+{% block page_heading %}Stock checks{% endblock %}
+
+{% block content %}
+
+<div class="page-head">
+    <div>
+        <h1>Shelf counts to do</h1>
+        <p>
+            StockFlow asks for a physical count when stock runs low, a count does not match the system,
+            or a product passes its count cycle. Counting the product with the scanner closes the check.
+        </p>
+    </div>
+    {% if can('admin', 'manager') %}
+    <div class="button-row">
+        <button class="secondary-button" id="run-scan"><svg class="icon"><use href="#i-refresh"/></svg> Scan for new checks</button>
+        <button class="primary-button" id="new-check"><svg class="icon"><use href="#i-plus"/></svg> Request a count</button>
+    </div>
+    {% endif %}
+</div>
+
+<div class="desktop-alerts" id="desktop-prompt" hidden>
+    <span>Get a desktop alert when a new check is assigned to you, even when this tab is in the background.</span>
+    <button class="amber-button" id="desktop-enable">Turn on desktop alerts</button>
+</div>
+
+<div class="row-between" style="margin-bottom:14px">
+    <div class="summary-row" id="summary"></div>
+    {% if can('admin', 'manager') %}
+    <div class="segmented" role="radiogroup" aria-label="Whose checks">
+        <label><input type="radio" name="scope" value="all" checked><span>Everyone</span></label>
+        <label><input type="radio" name="scope" value="mine"><span>Assigned to me</span></label>
+    </div>
+    {% endif %}
+</div>
+
+<div class="tabs" role="tablist">
+    <button class="tab active" data-status="open" role="tab">To do</button>
+    <button class="tab" data-status="done" role="tab">Completed</button>
+</div>
+
+<section class="panel flush">
+    <div class="task-list" id="task-list"><p class="empty-state">Loading…</p></div>
+</section>
+
+{% if can('admin', 'manager') %}
+<div class="modal" id="check-modal">
+    <div class="modal-card">
+        <div class="modal-header">
+            <h3 id="check-modal-title">Request a count</h3>
+            <button class="close-x" data-close-modal="check-modal" aria-label="Close">×</button>
+        </div>
+
+        <form id="check-form" class="form-grid">
+            <input type="hidden" name="id">
+
+            <label class="span-2" id="product-field">Product
+                <select name="product_id" required></select>
+            </label>
+            <label>Assign to
+                <select name="assigned_to"></select>
+                <span class="form-hint">Leave on automatic to pick the least busy staff member.</span>
+            </label>
+            <label>Priority
+                <select name="priority">
+                    <option value="HIGH">High, within 8 hours</option>
+                    <option value="MEDIUM" selected>Medium, within a day</option>
+                    <option value="LOW">Low, within 3 days</option>
+                </select>
+            </label>
+            <label class="span-2">Note for the counter
+                <input name="note" maxlength="1000" placeholder="For example: check the back store room too">
+            </label>
+
+            <div class="form-actions span-2">
+                <button type="button" class="secondary-button" data-close-modal="check-modal">Cancel</button>
+                <button type="submit" class="primary-button" id="check-submit">Send request</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endif %}
+
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/checks.js') }}"></script>
+{% endblock %}

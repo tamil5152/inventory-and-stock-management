@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+
+{% block title %}Inventory | StockFlow{% endblock %}
+{% block page_heading %}Stock movements{% endblock %}
+
+{% block content %}
+
+<div class="welcome-section">
+    <div>
+        <h1>Stock movements</h1>
+        <p>Record deliveries and issues, and see every change to stock levels.</p>
+    </div>
+</div>
+
+<div class="two-column">
+
+    <div class="panel">
+        <div class="panel-heading">
+            <h3>Record a movement</h3>
+            <p>Pick a product, then choose what happened</p>
+        </div>
+
+        <div class="form-grid">
+            <label class="span-2">Product
+                <select id="quick-product"><option value="">Loading…</option></select>
+            </label>
+            <div class="span-2 button-row">
+                <button class="primary-button" data-quick="STOCK_IN">Stock in</button>
+                <button class="secondary-button" data-quick="STOCK_OUT">Stock out</button>
+                {% if can('admin', 'manager') %}
+                <button class="secondary-button" data-quick="ADJUSTMENT">Set exact count</button>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <div class="panel">
+        <div class="panel-heading">
+            <h3>Low stock</h3>
+            <p>At or below reorder level</p>
+        </div>
+        <div class="table-wrapper">
+            <table class="compact">
+                <thead><tr><th>Product</th><th class="num">Qty</th><th class="num">Reorder</th><th></th></tr></thead>
+                <tbody id="low-stock-body"><tr><td colspan="4" class="empty-state">Loading…</td></tr></tbody>
+            </table>
+        </div>
+    </div>
+
+</div>
+
+<div class="panel">
+    <div class="panel-heading row-between">
+        <div>
+            <h3>Movement history</h3>
+            <p>The latest 200 movements</p>
+        </div>
+        <select id="history-product"><option value="">All products</option></select>
+    </div>
+
+    <div class="table-wrapper">
+        <table>
+            <thead>
+                <tr>
+                    <th>Date</th><th>Product</th><th>Type</th><th class="num">Qty</th>
+                    <th class="num">Before</th><th class="num">After</th><th>Reference</th><th>Notes</th><th>By</th>
+                </tr>
+            </thead>
+            <tbody id="history-body"><tr><td colspan="9" class="empty-state">Loading…</td></tr></tbody>
+        </table>
+    </div>
+</div>
+
+{% include "_stock_modal.html" %}
+
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/stock_modal.js') }}"></script>
+<script src="{{ url_for('static', filename='js/inventory.js') }}"></script>
+{% endblock %}
