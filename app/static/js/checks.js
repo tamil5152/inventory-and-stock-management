@@ -27,6 +27,13 @@
         return `Due ${StockFlow.formatDate(task.due_at)}`;
     }
 
+    // Risk factors that only repeat the reason are left out.
+    const SAME_AS_REASON = { OUT_OF_STOCK: "out of stock", NEVER_COUNTED: "never physically counted" };
+
+    function extraFactors(task) {
+        return (task.risk_factors || []).filter((f) => f !== SAME_AS_REASON[task.reason]);
+    }
+
     function renderSummary(s) {
 
         summaryEl.innerHTML = `
@@ -61,7 +68,11 @@
                         ${t.status === "CANCELLED" ? '<span class="badge plain">Cancelled</span>' : ""}
                         ${result}
                     </div>
-                    <div class="task-reason">${e(t.reason_text)}</div>
+                    <div class="task-reason">
+                        ${t.risk_score !== null && t.risk_score !== undefined
+                            ? `<span class="risk-pill risk-${(t.risk_level || "LOW").toLowerCase()}" title="Risk score out of 100">Risk ${Math.round(t.risk_score)}</span>` : ""}
+                        ${e(t.reason_text)}${extraFactors(t).length ? `: ${e(extraFactors(t).join(", "))}` : ""}
+                    </div>
                     <div class="task-meta">
                         <span><code>${e(t.sku)}</code></span>
                         <span>${t.shelf_code ? `Shelf <span class="chip">${e(t.shelf_code)}</span> ${e(t.shelf_name)}` : "No shelf"}</span>
@@ -69,6 +80,7 @@
                         <span>Requested by ${e(t.created_by)}</span>
                         ${open ? `<span>${dueText(t)}</span>` : `<span>Closed ${StockFlow.formatDate(t.completed_at)}${t.completed_by ? " by " + e(t.completed_by) : ""}</span>`}
                     </div>
+                    ${t.assignment_reason ? `<div class="task-why"><svg class="icon"><use href="#i-users"/></svg><span>${t.reassign_count ? "Moved automatically. " : ""}Assigned because: ${e(t.assignment_reason.replace(/^reassigned automatically: /, ""))}</span></div>` : ""}
                     ${t.note ? `<div class="task-note">${e(t.note)}</div>` : ""}
                 </div>
                 <div class="task-actions">

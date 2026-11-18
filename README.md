@@ -138,7 +138,7 @@ The database is a SQLite file at `instance/inventory.db`. Delete it to start fre
 python -m pytest -q
 ```
 
-54 tests cover shelves, staff details, job e-mails, the stock-check alerts and notifications, the DSA utilities, login, permissions, products, stock movements, scanning,
+63 tests cover risk scoring and automatic assignment, shelves, staff details, job e-mails, the stock-check alerts and notifications, the DSA utilities, login, permissions, products, stock movements, scanning,
 suppliers, users and report exports. Tests use an in-memory database and do not touch your data.
 
 ---
@@ -171,7 +171,41 @@ Who gets what:
 
 The *Staff* page shows whether e-mail is on and has a **Send test e-mail** button.
 
-## 7. Gmail setup (send job e-mails)
+## 7. Automatic, risk-based assignment
+
+Every stock check gets a **risk score from 0 to 100** that says how likely the shelf is wrong
+and how much it matters. The score is built from:
+
+| Factor | Points |
+|---|---|
+| Out of stock, or at/below the reorder level | up to 40 |
+| Selling fast: fewer than 3 or 7 days of stock left (sales over the last 14 days) | up to 20 |
+| Last count did not match and nothing has changed since | up to 30 |
+| Never counted, or past its count cycle | up to 20 |
+| Stock value on the shelf (Rs. 5,000+ / Rs. 20,000+) | up to 10 |
+
+The score sets the **priority** (70+ high, 40+ medium) and **due time** (8 h / 24 h / 3 days).
+Any product at or above `ALERT_RISK_THRESHOLD` (default 60) gets a check even when nothing else triggered one.
+
+**Who gets the job** is decided automatically:
+
+1. **Shelf team first**: the staff who look after the product's shelf. If nobody does, all staff, then managers.
+2. **Accuracy for risky jobs**: each person's share of correct counts over the last 60 days
+   (new staff start at 90%). The higher the risk, the more accuracy counts.
+3. **Fair workload**: the risk scores of the jobs each person already has are added up, so a
+   person with two urgent jobs is not handed a third while a colleague is free.
+4. **Second opinion on mismatches**: when a count does not match, a **recount is assigned
+   immediately to a different person**. If the recount also does not match, managers and the admin
+   mailbox get a "Recount confirms mismatch" alert to investigate.
+5. **Overdue urgent jobs move on**: a high-priority job not done in time is **reassigned automatically**
+   to the next best person (once), and the new person, the previous person and the admin are e-mailed.
+
+The assigned person is **e-mailed automatically** with the product, shelf, risk score, why it needs
+counting and why they were chosen. The same details appear on the *Stock checks* page.
+This runs on its own: instantly when stock drops or a count is recorded, and every
+`ALERT_INTERVAL_MINUTES` (default 60) while `python run.py` is running.
+
+## 8. Gmail setup (send job e-mails)
 
 The app sends mail through your Gmail account. Gmail does **not** accept your normal password
 from apps; you need an **App Password**.
@@ -208,11 +242,13 @@ DISPLAY_TIMEZONE=Asia/Kolkata
 | `ADMIN_EMAIL` | Mailbox that receives a copy of every job assignment and new-staff notice |
 | `APP_BASE_URL` | Used to build the links inside e-mails. Change it when you host the app online |
 | `DISPLAY_TIMEZONE` | Time zone for due times in e-mails |
+| `ALERT_RISK_THRESHOLD` | Risk score (0-100) at which a product gets a check automatically. Default 60 |
+| `AUTO_REASSIGN_OVERDUE` | `True` moves overdue high-priority jobs to the next best person |
 
 Keep `.env` private. It is listed in `.gitignore`, so it is never pushed to GitHub.
 If you think the App Password leaked, delete it on the App Passwords page and create a new one.
 
-## 8. Stock-check alerts and notifications
+## 9. Stock-check alerts and notifications
 
 StockFlow creates a **stock check**, a request to physically count one product, when:
 
@@ -247,7 +283,7 @@ If you run several gunicorn workers, set `ALERT_SCHEDULER=False` and schedule th
 flask --app run run-alerts      # e.g. hourly via cron or Windows Task Scheduler
 ```
 
-## 9. Features
+## 10. Features
 
 | Page | What it does |
 |------|--------------|
@@ -291,7 +327,7 @@ flask --app run run-alerts      # e.g. hourly via cron or Windows Task Scheduler
 
 ---
 
-## 10. Project structure
+## 11. Project structure
 
 ```
 inventory-stock-management/
@@ -315,6 +351,7 @@ inventory-stock-management/
     ├── scheduler.py     # background stock-check scan
     ├── schema.py        # adds new columns to older databases automatically
     ├── services/        # business logic (inventory, verification, risk, priority, reports,
+    │                    #   assignment_service: risk scores + choosing the right person,
     │                    #   recommendations, stock checks, notifications)
     ├── routes/          # auth, pages, and JSON APIs (/api/...)
     ├── utils/           # validators, DSA, role decorator, audit helper
@@ -322,7 +359,7 @@ inventory-stock-management/
     └── static/          # css, js, fonts (IBM Plex, bundled so it works offline)
 ```
 
-## 11. Main API endpoints
+## 12. Main API endpoints
 
 All return JSON and need a logged-in session (browser) plus the `X-CSRFToken` header for POST/PUT/DELETE.
 
@@ -368,7 +405,7 @@ GET/POST /api/suppliers/   PUT /api/suppliers/<id>   POST /api/suppliers/<id>/to
 GET/POST /api/users/       PUT /api/users/<id>      {full_name, email, phone, role, shelf_ids[], ...}  (admin)
 ```
 
-## 12. Optional: Flask CLI & production
+## 13. Optional: Flask CLI & production
 
 ```bash
 flask --app run seed-demo
@@ -385,7 +422,7 @@ gunicorn -w 2 -b 0.0.0.0:8000 wsgi:app
 Set `FLASK_DEBUG=False`, a strong `SECRET_KEY`, and `COOKIE_SECURE=True` when served over HTTPS.
 To use PostgreSQL, set `DATABASE_URL=postgresql://user:pass@host:5432/dbname` and `pip install psycopg2-binary`.
 
-## 13. Troubleshooting
+## 14. Troubleshooting
 
 | Problem | Fix |
 |---------|-----|

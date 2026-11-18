@@ -57,7 +57,7 @@ def list_checks():
     if status == "done":
         query = query.order_by(CheckTask.completed_at.desc(), CheckTask.id.desc())
     else:
-        query = query.order_by(priority_order, CheckTask.due_at.asc())
+        query = query.order_by(priority_order, CheckTask.risk_score.desc(), CheckTask.due_at.asc())
 
     tasks = query.limit(300).all()
 

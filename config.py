@@ -43,6 +43,10 @@ class Config:
     ALERT_SCHEDULER = os.getenv("ALERT_SCHEDULER", "True").lower() == "true"
     ALERT_INTERVAL_MINUTES = int(os.getenv("ALERT_INTERVAL_MINUTES", "60"))
     ALERT_MAX_TASKS_PER_RUN = int(os.getenv("ALERT_MAX_TASKS_PER_RUN", "25"))
+    # Products at or above this risk score get a check even without another reason.
+    ALERT_RISK_THRESHOLD = float(os.getenv("ALERT_RISK_THRESHOLD", "60"))
+    # Hand overdue high-priority checks to the next best person (once).
+    AUTO_REASSIGN_OVERDUE = os.getenv("AUTO_REASSIGN_OVERDUE", "True").lower() == "true"
 
     # Optional e-mail notifications (leave MAIL_SERVER empty to disable)
     MAIL_SERVER = os.getenv("MAIL_SERVER", "")

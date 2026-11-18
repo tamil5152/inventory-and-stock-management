@@ -13,6 +13,12 @@ NEW_COLUMNS = {
         "count_interval_days": "INTEGER NOT NULL DEFAULT 30",
         "shelf_id": "INTEGER REFERENCES shelves(id)",
     },
+    "check_tasks": {
+        "risk_score": "FLOAT",
+        "risk_factors": "TEXT",
+        "assignment_reason": "TEXT",
+        "reassign_count": "INTEGER NOT NULL DEFAULT 0",
+    },
     "users": {
         "full_name": "VARCHAR(120)",
         "phone": "VARCHAR(20)",

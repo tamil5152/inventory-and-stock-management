@@ -183,7 +183,9 @@ def seed_demo_data():
 
         # Shelf counts: most products counted recently, a few never or long ago,
         # and one with a mismatch so every kind of stock check shows up.
-        counted_by = staff_user.id if staff_user else admin_id
+        shelf = shelves.get(shelf_code) if shelf_code else None
+        shelf_staff = [u for u in (shelf.staff if shelf else []) if u.role == "staff"]
+        counted_by = shelf_staff[0].id if shelf_staff else (staff_user.id if staff_user else admin_id)
 
         if sku not in ("STO-002", "LAP-001"):        # these two were never counted
             if sku == "CAB-002":

@@ -21,6 +21,8 @@ class CheckTask(db.Model):
         "LOW_STOCK": "Stock at or below reorder level",
         "DISCREPANCY": "Last count did not match the system",
         "OVERDUE_COUNT": "Not counted within its count cycle",
+        "RECOUNT": "Recount: the last count did not match the system",
+        "HIGH_RISK": "High risk of a stock mismatch",
         "NEVER_COUNTED": "Never physically counted",
         "MANUAL": "Requested by a manager",
     }
@@ -41,6 +43,12 @@ class CheckTask(db.Model):
     status = db.Column(db.String(20), nullable=False, default="OPEN", index=True)
     note = db.Column(db.Text, nullable=True)
     result_status = db.Column(db.String(30), nullable=True)
+
+    # Why this check exists and why this person got it.
+    risk_score = db.Column(db.Float, nullable=True)
+    risk_factors = db.Column(db.Text, nullable=True)
+    assignment_reason = db.Column(db.Text, nullable=True)
+    reassign_count = db.Column(db.Integer, nullable=False, default=0)
 
     due_at = db.Column(db.DateTime(timezone=True), nullable=True)
     overdue_notified = db.Column(db.Boolean, nullable=False, default=False)
@@ -93,6 +101,14 @@ class CheckTask(db.Model):
             "note": self.note,
             "result_status": self.result_status,
             "verification_id": self.verification_id,
+            "risk_score": self.risk_score,
+            "risk_level": (
+                "HIGH" if (self.risk_score or 0) >= 70
+                else "MEDIUM" if (self.risk_score or 0) >= 40 else "LOW"
+            ) if self.risk_score is not None else None,
+            "risk_factors": self.risk_factors.split("; ") if self.risk_factors else [],
+            "assignment_reason": self.assignment_reason,
+            "reassign_count": self.reassign_count or 0,
             "is_overdue": self.is_overdue,
             "due_at": _iso(self.due_at),
             "created_at": _iso(self.created_at),
